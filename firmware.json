@@ -1,0 +1,29 @@
+[
+  {
+    "name": "LoraMess Firmware",
+    "board": "ESP32-S3",
+    "version": "1.0.0",
+    "date": "2026-08-23",
+    "size": "1.2 MB",
+    "description": "Firmware cho thiết bị nhắn tin LoRa của LMH.DEV.",
+    "file": "loramess-v1.0.0.bin"
+  },
+  {
+    "name": "Bruce Multi-Boot",
+    "board": "ESP32-S3",
+    "version": "2.1.0",
+    "date": "2026-08-20",
+    "size": "3.4 MB",
+    "description": "Bruce firmware bản mod, hỗ trợ multi-boot cho board Smoochiee.",
+    "file": "bruce-multiboot-v2.1.0.bin"
+  },
+  {
+    "name": "Flipper ESP32 Port — 6 Button",
+    "board": "ESP32-S3",
+    "version": "0.9.2",
+    "date": "2026-08-15",
+    "size": "2.1 MB",
+    "description": "Port firmware Flipper Zero cho board 6 nút, hỗ trợ màn hình OLED.",
+    "file": "flipper-6btn-v0.9.2.bin"
+  }
+]
