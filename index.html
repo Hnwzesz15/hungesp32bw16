@@ -4,15 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>hungtesp · Firmware Hub</title>
-<meta name="description" content="Kho firmware ESP32-S3 của hungtesp — tải về và flash trực tiếp.">
+<meta name="description" content="Kho firmware ESP32-S3 của hungtesp — flash trực tiếp qua trình duyệt, không cần cài phần mềm.">
 <meta property="og:title" content="hungtesp · Firmware Hub">
-<meta property="og:description" content="Firmware ESP32-S3 tự build — tải về, copy lệnh flash, dùng ngay.">
+<meta property="og:description" content="Firmware ESP32-S3 tự build — flash qua web bằng Chrome/Edge, hoặc tải về dùng esptool.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#0a150f">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230f2317'/%3E%3Crect x='9' y='9' width='14' height='14' rx='1' fill='none' stroke='%233ddc84' stroke-width='2'/%3E%3Crect x='13' y='13' width='6' height='6' fill='%233ddc84'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 <style>
   :root{
     --bg:#0a150f; --bg-2:#0d1c14;
@@ -105,6 +106,35 @@
     .hero-visual .led{animation:none;}
   }
 
+  /* ---------- compat banner ---------- */
+  .compat-banner{
+    display:flex; align-items:flex-start; gap:12px; margin-top:22px;
+    padding:14px 16px; border-radius:var(--radius); font-size:13px; line-height:1.55;
+  }
+  .compat-banner.ok{background:rgba(61,220,132,.07); border:1px solid rgba(61,220,132,.3); color:var(--trace);}
+  .compat-banner.warn{background:rgba(226,114,91,.08); border:1px solid rgba(226,114,91,.35); color:#f0a892;}
+  .compat-banner .ic{font-size:16px; line-height:1;}
+  .compat-banner b{color:var(--text);}
+  .compat-banner a{color:inherit; text-decoration:underline;}
+
+  /* ---------- how-to guide ---------- */
+  .guide{
+    margin:18px 0 0; background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .guide-tabs{display:flex; border-bottom:1px dashed rgba(61,220,132,.2);}
+  .guide-tab{
+    flex:1; background:transparent; border:none; cursor:pointer; padding:12px 14px;
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--muted); border-bottom:2px solid transparent; transition:color .15s ease, border-color .15s ease;
+  }
+  .guide-tab.active{color:var(--trace); border-bottom-color:var(--trace); background:rgba(61,220,132,.05);}
+  .guide-panel{padding:16px 18px; display:none;}
+  .guide-panel.active{display:block;}
+  .guide-panel ol{margin:0; padding-left:20px; color:var(--muted); font-size:13.5px; line-height:1.8;}
+  .guide-panel li b{color:var(--text); font-weight:600;}
+  .guide-panel li code{color:var(--trace);}
+
   /* ---------- controls ---------- */
   .section-eyebrow{
     font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
@@ -170,32 +200,41 @@
 
   .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
   .card-name{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:18px; margin:0;}
+  .card-badges{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
   .badge{
     font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.06em;
     color:var(--gold); border:1px solid rgba(212,175,55,.4); padding:2px 8px; border-radius:var(--radius);
     text-transform:uppercase; white-space:nowrap;
   }
+  .badge-flashable{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.06em;
+    color:#062012; background:var(--trace); padding:2px 7px; border-radius:var(--radius);
+    text-transform:uppercase; white-space:nowrap; font-weight:700;
+  }
   .card-desc{color:var(--muted); font-size:13.5px; line-height:1.55; margin:10px 0 14px;}
   .meta-row{display:flex; gap:18px; flex-wrap:wrap; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-bottom:16px;}
   .meta-row b{color:var(--text); font-weight:500;}
 
-  .card-actions{display:flex; gap:10px; flex-wrap:wrap;}
+  .card-actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
   .btn{
     font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.03em;
     padding:9px 14px; border-radius:var(--radius); text-decoration:none; cursor:pointer;
     display:inline-flex; align-items:center; gap:7px; border:1px solid transparent; background:none;
   }
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
   .btn-primary{background:var(--trace); color:#062012; font-weight:700;}
   .btn-primary:hover{background:#4be996;}
+  .btn-flash{background:var(--gold); color:#241c02; font-weight:700; border-color:var(--gold);}
+  .btn-flash:hover{background:#e7c257;}
+  .btn-secondary{background:transparent; border-color:rgba(61,220,132,.5); color:var(--trace);}
+  .btn-secondary:hover{border-color:var(--trace); background:rgba(61,220,132,.08);}
   .btn-ghost{background:transparent; border-color:rgba(61,220,132,.35); color:var(--trace);}
   .btn-ghost:hover{border-color:var(--trace); background:rgba(61,220,132,.08);}
   .btn-icon{padding:9px 10px;}
-
-  .flash-cmd-wrap{margin-top:12px; position:relative;}
-  .flash-cmd{
-    font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted);
-    background:#081209; border:1px dashed rgba(61,220,132,.25); border-radius:var(--radius);
-    padding:8px 34px 8px 10px; overflow-x:auto; white-space:pre;
+  .flash-wrap{position:relative; display:inline-flex;}
+  .flash-note{
+    width:100%; margin-top:8px; font-family:'JetBrains Mono',monospace; font-size:11px;
+    color:var(--muted);
   }
 
   .skeleton{
@@ -256,7 +295,7 @@
         <span class="chip-mark"><span class="dot"></span>ESP32-S3 · FIRMWARE HUB</span>
         <h1><span class="brand"><span class="hung">hung</span><span>tesp</span></span><span class="deco">🎄</span></h1>
         <p class="boot-line">&gt; loading firmware_index.json ...</p>
-        <p class="lead">Firmware do mình tự build cho các board ESP32-S3 — flash thẳng qua trình duyệt hoặc esptool, không cần cài gì thêm.</p>
+        <p class="lead">Firmware do mình tự build cho các board ESP32-S3 — cắm USB, bấm nút, flash thẳng ngay trên trình duyệt. Không cần cài esptool hay phần mềm gì thêm.</p>
 
         <div class="readout">
           <div class="stat"><b id="stat-count">0</b><span>Firmware</span></div>
@@ -307,6 +346,22 @@
     </div>
   </header>
 
+  <div id="compat-banner"></div>
+
+  <div class="guide">
+    <div class="guide-tabs">
+      <button class="guide-tab active" data-guide="web">⚡ Cách flash qua Web</button>
+    </div>
+    <div class="guide-panel active" id="guide-web">
+      <ol>
+        <li>Cắm board ESP32-S3 vào máy tính bằng cáp USB (loại có truyền data, không phải cáp sạc).</li>
+        <li>Mở trang này bằng <b>Google Chrome</b> hoặc <b>Microsoft Edge</b> trên máy tính.</li>
+        <li>Bấm nút <b>⚡ Flash qua USB</b> trên firmware muốn cài, chọn đúng cổng COM khi trình duyệt hỏi.</li>
+        <li>Đợi quá trình xoá và ghi firmware chạy xong — không rút cáp trong lúc này.</li>
+      </ol>
+    </div>
+  </div>
+
   <p class="section-eyebrow">// DANH SÁCH FIRMWARE</p>
   <section class="controls">
     <input type="search" id="search" placeholder="Tìm theo tên, board, mô tả... (vd: LoRa, 6-button, bruce)">
@@ -343,6 +398,27 @@
 <script>
 document.getElementById('year').textContent = new Date().getFullYear();
 
+// ---- Web Serial support check ----
+const canFlashInBrowser = 'serial' in navigator && window.isSecureContext;
+(function renderCompatBanner(){
+  const el = document.getElementById('compat-banner');
+  if(canFlashInBrowser){
+    el.innerHTML = `<div class="compat-banner ok"><span class="ic">✓</span><div><b>Trình duyệt này hỗ trợ flash trực tiếp.</b> Cắm board qua USB và bấm "⚡ Flash qua USB" trên firmware bạn muốn cài — không cần cài thêm phần mềm nào.</div></div>`;
+  }else{
+    el.innerHTML = `<div class="compat-banner warn"><span class="ic">⚠</span><div><b>Trình duyệt hoặc thiết bị này chưa hỗ trợ flash qua web.</b> Tính năng dùng chuẩn Web Serial, hiện chỉ chạy trên <b>Chrome</b> hoặc <b>Edge trên máy tính</b> (không hỗ trợ Firefox, Safari, hoặc điện thoại). Dùng mục "Flash bằng lệnh" bên dưới thay thế.</div></div>`;
+  }
+})();
+
+// ---- guide tabs ----
+document.querySelectorAll('.guide-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.guide-tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.guide-panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('guide-' + t.dataset.guide).classList.add('active');
+  });
+});
+
 const grid = document.getElementById('grid');
 const searchEl = document.getElementById('search');
 const sortEl = document.getElementById('sort');
@@ -374,9 +450,26 @@ function parseSizeMB(sizeStr){
   return num;
 }
 
-function flashCmd(item){
-  const chip = (item.board || 'esp32s3').toLowerCase().replace(/[^a-z0-9]/g,'');
-  return `esptool.py --chip ${chip} --port PORT write_flash 0x0 ${item.file}`;
+// Map board label -> chipFamily string expected by ESP Web Tools
+function chipFamily(board){
+  const b = (board || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if(b.includes('S3')) return 'ESP32-S3';
+  if(b.includes('C3')) return 'ESP32-C3';
+  if(b.includes('C6')) return 'ESP32-C6';
+  if(b.includes('S2')) return 'ESP32-S2';
+  if(b.includes('8266')) return 'ESP8266';
+  return 'ESP32';
+}
+
+// Build a manifest blob URL on the fly so ESP Web Tools can flash this exact firmware file
+function buildManifestUrl(item){
+  const fileUrl = new URL(`firmware/${item.file}`, window.location.href).href;
+  const manifest = {
+    name: item.name,
+    version: item.version || '1.0.0',
+    builds: [{ chipFamily: chipFamily(item.board), parts: [{ path: fileUrl, offset: 0 }] }]
+  };
+  return URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/json' }));
 }
 
 function sortItems(items){
@@ -416,7 +509,10 @@ function render(){
       <span class="hole tl"></span><span class="hole tr"></span><span class="hole bl"></span><span class="hole br"></span>
       <div class="card-top">
         <h3 class="card-name">${esc(it.name)}</h3>
-        <span class="badge">${esc(it.board || 'ESP32-S3')}</span>
+        <div class="card-badges">
+          ${canFlashInBrowser ? '<span class="badge-flashable">⚡ Flash Web</span>' : ''}
+          <span class="badge">${esc(it.board || 'ESP32-S3')}</span>
+        </div>
       </div>
       <p class="card-desc">${esc(it.description || '')}</p>
       <div class="meta-row">
@@ -424,23 +520,34 @@ function render(){
         <span>Ngày: <b>${esc(it.date || '—')}</b></span>
         <span>Dung lượng: <b>${esc(it.size || '—')}</b></span>
       </div>
-      <div class="card-actions">
-        <a class="btn btn-primary" href="firmware/${encodeURIComponent(it.file)}" download>⬇ Tải firmware</a>
-        <button class="btn btn-ghost" data-cmd="${esc(flashCmd(it))}">📋 Copy lệnh flash</button>
+      <div class="card-actions" data-idx="${idx}">
+        ${canFlashInBrowser ? `<span class="flash-wrap" data-flash-slot="${idx}"></span>` : ''}
+        <a class="btn ${canFlashInBrowser ? 'btn-secondary' : 'btn-primary'}" href="firmware/${encodeURIComponent(it.file)}" download>⬇ Tải firmware</a>
         <button class="btn btn-ghost btn-icon" data-link="firmware/${esc(it.file)}" title="Copy link tải trực tiếp">🔗</button>
-      </div>
-      <div class="flash-cmd-wrap">
-        <div class="flash-cmd">${esc(flashCmd(it))}</div>
+        ${!canFlashInBrowser ? `<span class="flash-note">Flash qua web cần Chrome/Edge trên máy tính.</span>` : ''}
       </div>
     </article>
   `).join('');
 
-  grid.querySelectorAll('[data-cmd]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      try{ await navigator.clipboard.writeText(btn.dataset.cmd); toast('✓ Đã copy lệnh flash'); }
-      catch(e){ toast('Không copy được — trình duyệt chặn clipboard'); }
+  // Mount the real esp-web-install-button elements after innerHTML is set
+  // (custom elements with dynamic manifest attrs are built here rather than
+  // as template strings, since the manifest is a per-item generated blob URL).
+  if(canFlashInBrowser){
+    items.forEach((it, idx) => {
+      const slot = grid.querySelector(`[data-flash-slot="${idx}"]`);
+      if(!slot) return;
+      const installBtn = document.createElement('esp-web-install-button');
+      installBtn.setAttribute('manifest', buildManifestUrl(it));
+      const trigger = document.createElement('button');
+      trigger.className = 'btn btn-flash';
+      trigger.type = 'button';
+      trigger.innerHTML = '⚡ Flash qua USB';
+      trigger.setAttribute('slot', 'activate');
+      installBtn.appendChild(trigger);
+      slot.appendChild(installBtn);
     });
-  });
+  }
+
   grid.querySelectorAll('[data-link]').forEach(btn => {
     btn.addEventListener('click', async () => {
       const url = new URL(btn.dataset.link, window.location.href).href;
