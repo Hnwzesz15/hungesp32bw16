@@ -7,8 +7,8 @@
     "size": "2.98 MB",
     "description": "Firmware Flipper Zero cho màn hình OLED 0.96 inch.",
     "file": "Flipper Zero Oled 0.96 1.1.5.bin"
-  }
-    {
+  },
+  {
     "name": "TV B GONE",
     "board": "ESP32-C3 SUPER MINI",
     "version": "1",
