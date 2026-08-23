@@ -16,5 +16,14 @@
     "size": "4 MB",
     "description": "TV B GONE cho esp32-c3 super mini",
     "file": "tvbgone.bin"
+  },
+  {
+    "name": "Flipper Zero 1.47 inch",
+    "board": "ESP32-S3",
+    "version": "1.1.5",
+    "date": "2026-08-23",
+    "size": "2.99 MB",
+    "description": "Firmware Flipper Zero cho màn hình 1.47.",
+    "file": "147.bin"
   }
 ]
