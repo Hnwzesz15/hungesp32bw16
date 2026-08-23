@@ -2,7 +2,6 @@
   {
     "name": "Flipper Zero Oled 0.96",
     "board": "ESP32-S3",
-    "version": "1.1.5",
     "date": "2026-08-23",
     "size": "2.1 MB",
     "description": "Firmware Flipper Zero cho màn hình OLED 0.96 inch.",
