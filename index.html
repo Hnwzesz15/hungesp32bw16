@@ -5,23 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>hungtesp · Firmware Hub</title>
 <meta name="description" content="Kho firmware ESP32-S3 của hungtesp — tải về và flash trực tiếp.">
+<meta property="og:title" content="hungtesp · Firmware Hub">
+<meta property="og:description" content="Firmware ESP32-S3 tự build — tải về, copy lệnh flash, dùng ngay.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0a150f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230f2317'/%3E%3Crect x='9' y='9' width='14' height='14' rx='1' fill='none' stroke='%233ddc84' stroke-width='2'/%3E%3Crect x='13' y='13' width='6' height='6' fill='%233ddc84'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#0a150f;
-    --bg-2:#0d1c14;
-    --panel:#0f2317;
-    --panel-2:#12291b;
-    --mask:#1c4d33;
-    --trace:#3ddc84;
-    --trace-dim:#2a9c61;
-    --gold:#d4af37;
-    --text:#e6f1ea;
-    --muted:#7f9c8c;
-    --danger:#e2725b;
-    --radius:2px;
+    --bg:#0a150f; --bg-2:#0d1c14;
+    --panel:#0f2317; --panel-2:#12291b;
+    --mask:#1c4d33; --trace:#3ddc84; --trace-dim:#2a9c61;
+    --gold:#d4af37; --text:#e6f1ea; --muted:#7f9c8c;
+    --danger:#e2725b; --radius:2px;
   }
   *{box-sizing:border-box;}
   html{scroll-behavior:smooth;}
@@ -31,104 +29,110 @@
       radial-gradient(ellipse at top left, #0f2317 0%, transparent 55%),
       radial-gradient(ellipse at bottom right, #0d2418 0%, transparent 50%),
       var(--bg);
-    color:var(--text);
-    font-family:'Inter',sans-serif;
-    min-height:100vh;
-    background-attachment:fixed;
+    color:var(--text); font-family:'Inter',sans-serif;
+    min-height:100vh; background-attachment:fixed;
   }
-  /* faint PCB grid + trace texture */
   body::before{
-    content:"";
-    position:fixed; inset:0;
+    content:""; position:fixed; inset:0;
     background-image:
       linear-gradient(rgba(61,220,132,.05) 1px, transparent 1px),
       linear-gradient(90deg, rgba(61,220,132,.05) 1px, transparent 1px);
-    background-size:34px 34px;
-    pointer-events:none;
-    z-index:0;
+    background-size:34px 34px; pointer-events:none; z-index:0;
     mask-image:radial-gradient(ellipse at 30% 0%, black 0%, transparent 70%);
   }
-  .wrap{position:relative; z-index:1; max-width:920px; margin:0 auto; padding:0 20px 80px;}
-
+  .wrap{position:relative; z-index:1; max-width:960px; margin:0 auto; padding:0 20px 80px;}
   code, .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:inherit;}
+  :focus-visible{outline:2px solid var(--trace); outline-offset:2px;}
 
   /* ---------- header / hero ---------- */
-  header{padding:56px 0 40px; border-bottom:1px dashed rgba(61,220,132,.25);}
+  header{padding:56px 0 40px; border-bottom:1px dashed rgba(61,220,132,.25); position:relative; overflow:hidden;}
+  .trace-deco{position:absolute; top:-20px; right:-40px; width:260px; height:260px; opacity:.35; pointer-events:none;}
   .chip-mark{
     display:inline-flex; align-items:center; gap:8px;
     font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em;
     color:var(--trace); text-transform:uppercase;
     padding:4px 10px; border:1px solid var(--trace-dim); border-radius:var(--radius);
-    background:rgba(61,220,132,.06);
+    background:rgba(61,220,132,.06); position:relative; z-index:1;
   }
   .chip-mark .dot{width:6px;height:6px;border-radius:50%;background:var(--trace); box-shadow:0 0 6px var(--trace); animation:blink 1.6s infinite;}
   @keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
 
   h1{
-    font-family:'JetBrains Mono',monospace;
-    font-weight:800;
-    font-size:clamp(34px,6vw,54px);
-    line-height:1.05;
-    margin:18px 0 10px;
-    letter-spacing:-.01em;
+    font-family:'JetBrains Mono',monospace; font-weight:800;
+    font-size:clamp(34px,6vw,54px); line-height:1.05;
+    margin:18px 0 10px; letter-spacing:-.01em; position:relative; z-index:1;
   }
   h1 span{color:var(--trace);}
-  .lead{color:var(--muted); font-size:16px; max-width:56ch; line-height:1.6; margin:0 0 20px;}
+  .lead{color:var(--muted); font-size:16px; max-width:56ch; line-height:1.6; margin:0 0 20px; position:relative; z-index:1;}
   .boot-line{
     font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--trace-dim);
     white-space:pre; overflow:hidden; border-right:2px solid var(--trace);
     width:0; animation:type 1.6s steps(38,end) forwards, caret .8s step-end infinite;
+    position:relative; z-index:1;
   }
   @keyframes type{to{width:38ch;}}
   @keyframes caret{50%{border-color:transparent;}}
   @media (prefers-reduced-motion: reduce){
     .boot-line{width:38ch; animation:none;}
     .chip-mark .dot{animation:none;}
+    .card{animation:none !important;}
   }
 
-  .stat-row{display:flex; gap:28px; margin-top:26px; flex-wrap:wrap;}
+  .stat-row{display:flex; gap:28px; margin-top:26px; flex-wrap:wrap; position:relative; z-index:1;}
   .stat{font-family:'JetBrains Mono',monospace;}
   .stat b{display:block; font-size:22px; color:var(--text);}
   .stat span{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em;}
 
   /* ---------- controls ---------- */
-  .controls{
-    display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-    margin:36px 0 22px;
-  }
-  input[type="search"]{
-    flex:1; min-width:200px;
+  .controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:36px 0 22px;}
+  input[type="search"], select{
     background:var(--panel); border:1px solid rgba(61,220,132,.25);
     color:var(--text); font-family:'JetBrains Mono',monospace; font-size:13px;
     padding:10px 12px; border-radius:var(--radius); outline:none;
   }
+  input[type="search"]{flex:1; min-width:200px;}
   input[type="search"]::placeholder{color:var(--muted);}
-  input[type="search"]:focus{border-color:var(--trace);}
+  input[type="search"]:focus, select:focus{border-color:var(--trace);}
+  select{cursor:pointer; appearance:none; padding-right:26px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%233ddc84'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center;}
   .tab{
     font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
     background:transparent; border:1px solid rgba(61,220,132,.25); color:var(--muted);
     padding:9px 12px; border-radius:var(--radius); cursor:pointer;
   }
   .tab.active, .tab:hover{border-color:var(--trace); color:var(--trace);}
+  .view-toggle{display:flex; border:1px solid rgba(61,220,132,.25); border-radius:var(--radius); overflow:hidden;}
+  .view-toggle button{
+    background:transparent; border:none; color:var(--muted); padding:9px 11px; cursor:pointer;
+    font-family:'JetBrains Mono',monospace; font-size:13px; line-height:1;
+  }
+  .view-toggle button.active{background:rgba(61,220,132,.14); color:var(--trace);}
 
   /* ---------- firmware cards (IC module look) ---------- */
-  .grid{display:grid; gap:16px;}
+  .grid{display:grid; gap:16px; grid-template-columns:1fr;}
+  .grid.cols-2{grid-template-columns:1fr 1fr;}
+  @media (max-width:640px){ .grid.cols-2{grid-template-columns:1fr;} }
+
   .card{
     position:relative;
     background:linear-gradient(180deg, var(--panel-2), var(--panel));
     border:1px solid rgba(61,220,132,.22);
     border-radius:var(--radius);
     padding:20px 22px 18px;
+    opacity:0; transform:translateY(10px);
+    animation:reveal .5s ease forwards;
+    transition:border-color .2s ease, transform .2s ease;
   }
-  /* pin rows left/right */
+  .card:hover{border-color:rgba(61,220,132,.5); transform:translateY(-2px);}
+  @keyframes reveal{to{opacity:1; transform:translateY(0);}}
   .card::before, .card::after{
     content:""; position:absolute; top:14px; bottom:14px; width:10px;
     background-image:repeating-linear-gradient(to bottom, var(--gold) 0 4px, transparent 4px 11px);
     opacity:.55;
   }
-  .card::before{left:-5px;}
-  .card::after{right:-5px;}
-  /* mounting holes */
+  .card::before{left:-5px;} .card::after{right:-5px;}
   .card .hole{position:absolute; width:6px; height:6px; border-radius:50%; border:1px solid var(--trace-dim); opacity:.6;}
   .card .hole.tl{top:8px; left:8px;} .card .hole.tr{top:8px; right:8px;}
   .card .hole.bl{bottom:8px; left:8px;} .card .hole.br{bottom:8px; right:8px;}
@@ -148,24 +152,38 @@
   .btn{
     font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.03em;
     padding:9px 14px; border-radius:var(--radius); text-decoration:none; cursor:pointer;
-    display:inline-flex; align-items:center; gap:7px; border:1px solid transparent;
+    display:inline-flex; align-items:center; gap:7px; border:1px solid transparent; background:none;
   }
   .btn-primary{background:var(--trace); color:#062012; font-weight:700;}
   .btn-primary:hover{background:#4be996;}
   .btn-ghost{background:transparent; border-color:rgba(61,220,132,.35); color:var(--trace);}
   .btn-ghost:hover{border-color:var(--trace); background:rgba(61,220,132,.08);}
-  .btn-ghost.copied{color:var(--gold); border-color:var(--gold);}
+  .btn-icon{padding:9px 10px;}
 
+  .flash-cmd-wrap{margin-top:12px; position:relative;}
   .flash-cmd{
-    margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted);
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted);
     background:#081209; border:1px dashed rgba(61,220,132,.25); border-radius:var(--radius);
-    padding:8px 10px; overflow-x:auto; white-space:pre;
+    padding:8px 34px 8px 10px; overflow-x:auto; white-space:pre;
   }
+
+  .skeleton{
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border:1px solid rgba(61,220,132,.14); border-radius:var(--radius);
+    padding:20px 22px; height:150px; position:relative; overflow:hidden;
+  }
+  .skeleton::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(90deg, transparent, rgba(61,220,132,.07), transparent);
+    animation:shimmer 1.4s infinite;
+  }
+  @keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
 
   .empty{
     text-align:center; padding:60px 20px; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:13px;
     border:1px dashed rgba(61,220,132,.25); border-radius:var(--radius);
   }
+  .empty button{margin-top:14px;}
 
   footer{
     margin-top:60px; padding-top:24px; border-top:1px dashed rgba(61,220,132,.25);
@@ -175,6 +193,26 @@
   footer a{color:var(--trace); text-decoration:none;}
   footer a:hover{text-decoration:underline;}
 
+  /* toasts */
+  .toast-stack{position:fixed; bottom:20px; right:20px; z-index:50; display:flex; flex-direction:column; gap:8px;}
+  .toast{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px;
+    background:var(--panel-2); border:1px solid var(--trace-dim); color:var(--text);
+    padding:10px 14px; border-radius:var(--radius); box-shadow:0 6px 20px rgba(0,0,0,.4);
+    animation:toast-in .25s ease, toast-out .25s ease 1.8s forwards;
+  }
+  @keyframes toast-in{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+  @keyframes toast-out{to{opacity:0; transform:translateY(8px);}}
+
+  /* back to top */
+  #top-btn{
+    position:fixed; bottom:20px; left:20px; z-index:50;
+    width:38px; height:38px; border-radius:50%;
+    background:var(--panel-2); border:1px solid var(--trace-dim); color:var(--trace);
+    cursor:pointer; display:none; align-items:center; justify-content:center; font-size:16px;
+  }
+  #top-btn.show{display:flex;}
+
   ::selection{background:var(--trace); color:#062012;}
 </style>
 </head>
@@ -182,6 +220,14 @@
 <div class="wrap">
 
   <header>
+    <svg class="trace-deco" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M10 30 H90 V70 H150 V30 H190" stroke="#3ddc84" stroke-width="1.5"/>
+      <path d="M10 90 H60 V150 H130 V190" stroke="#3ddc84" stroke-width="1.5"/>
+      <circle cx="90" cy="30" r="3" fill="#d4af37"/>
+      <circle cx="150" cy="70" r="3" fill="#d4af37"/>
+      <circle cx="60" cy="90" r="3" fill="#d4af37"/>
+      <circle cx="130" cy="150" r="3" fill="#d4af37"/>
+    </svg>
     <span class="chip-mark"><span class="dot"></span>ESP32-S3 · FIRMWARE HUB</span>
     <h1>hung<span>tesp</span> 🎄</h1>
     <p class="boot-line">&gt; loading firmware_index.json ...</p>
@@ -190,17 +236,32 @@
     <div class="stat-row">
       <div class="stat"><b id="stat-count">0</b><span>Firmware</span></div>
       <div class="stat"><b id="stat-boards">0</b><span>Board target</span></div>
+      <div class="stat"><b id="stat-size">—</b><span>Tổng dung lượng</span></div>
       <div class="stat"><b id="stat-updated">—</b><span>Cập nhật gần nhất</span></div>
     </div>
   </header>
 
   <section class="controls">
     <input type="search" id="search" placeholder="Tìm theo tên, board, mô tả... (vd: LoRa, 6-button, bruce)">
+    <select id="sort">
+      <option value="new">Mới nhất</option>
+      <option value="old">Cũ nhất</option>
+      <option value="name">Tên A → Z</option>
+      <option value="size">Dung lượng</option>
+    </select>
     <button class="tab active" data-filter="all">Tất cả</button>
     <span id="board-tabs"></span>
+    <div class="view-toggle" role="group" aria-label="Chế độ xem">
+      <button id="view-grid" class="active" aria-label="Xem dạng lưới" title="Lưới">▦</button>
+      <button id="view-list" aria-label="Xem dạng danh sách" title="Danh sách">☰</button>
+    </div>
   </section>
 
-  <main class="grid" id="grid"></main>
+  <main class="grid" id="grid">
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </main>
 
   <footer>
     <span>© <span id="year"></span> hungtesp · LMH.DEV</span>
@@ -209,38 +270,82 @@
 
 </div>
 
+<button id="top-btn" title="Lên đầu trang">↑</button>
+<div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
 <script>
 document.getElementById('year').textContent = new Date().getFullYear();
 
 const grid = document.getElementById('grid');
 const searchEl = document.getElementById('search');
+const sortEl = document.getElementById('sort');
 const tabsEl = document.getElementById('board-tabs');
+const toastStack = document.getElementById('toast-stack');
+const topBtn = document.getElementById('top-btn');
 let ALL = [];
 let activeBoard = 'all';
+let viewMode = 'grid';
 
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function toast(msg){
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  toastStack.appendChild(el);
+  setTimeout(() => el.remove(), 2100);
+}
+
+function parseSizeMB(sizeStr){
+  if(!sizeStr) return 0;
+  const m = String(sizeStr).match(/([\d.]+)\s*(KB|MB|GB)?/i);
+  if(!m) return 0;
+  const num = parseFloat(m[1]);
+  const unit = (m[2] || 'MB').toUpperCase();
+  if(unit === 'GB') return num * 1024;
+  if(unit === 'KB') return num / 1024;
+  return num;
+}
 
 function flashCmd(item){
   const chip = (item.board || 'esp32s3').toLowerCase().replace(/[^a-z0-9]/g,'');
   return `esptool.py --chip ${chip} --port PORT write_flash 0x0 ${item.file}`;
 }
 
+function sortItems(items){
+  const arr = [...items];
+  switch(sortEl.value){
+    case 'old': return arr.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    case 'name': return arr.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    case 'size': return arr.sort((a,b) => parseSizeMB(b.size) - parseSizeMB(a.size));
+    default: return arr.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  }
+}
+
 function render(){
   const q = searchEl.value.trim().toLowerCase();
-  const items = ALL.filter(it => {
+  let items = ALL.filter(it => {
     const matchesBoard = activeBoard === 'all' || it.board === activeBoard;
     const hay = `${it.name} ${it.board} ${it.description||''} ${it.version||''}`.toLowerCase();
     const matchesQuery = !q || hay.includes(q);
     return matchesBoard && matchesQuery;
   });
+  items = sortItems(items);
+
+  grid.classList.toggle('cols-2', viewMode === 'grid');
 
   if(!items.length){
-    grid.innerHTML = `<div class="empty">&gt; không tìm thấy firmware nào khớp truy vấn.</div>`;
+    grid.innerHTML = `<div class="empty">&gt; không tìm thấy firmware nào khớp truy vấn.<br><button class="btn btn-ghost" id="reset-filters">Xoá bộ lọc</button></div>`;
+    document.getElementById('reset-filters')?.addEventListener('click', () => {
+      searchEl.value = ''; activeBoard = 'all';
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.filter === 'all'));
+      render();
+    });
     return;
   }
 
-  grid.innerHTML = items.map(it => `
-    <article class="card">
+  grid.innerHTML = items.map((it, idx) => `
+    <article class="card" style="animation-delay:${Math.min(idx,8) * 40}ms">
       <span class="hole tl"></span><span class="hole tr"></span><span class="hole bl"></span><span class="hole br"></span>
       <div class="card-top">
         <h3 class="card-name">${esc(it.name)}</h3>
@@ -255,20 +360,25 @@ function render(){
       <div class="card-actions">
         <a class="btn btn-primary" href="firmware/${encodeURIComponent(it.file)}" download>⬇ Tải firmware</a>
         <button class="btn btn-ghost" data-cmd="${esc(flashCmd(it))}">📋 Copy lệnh flash</button>
+        <button class="btn btn-ghost btn-icon" data-link="firmware/${esc(it.file)}" title="Copy link tải trực tiếp">🔗</button>
       </div>
-      <div class="flash-cmd">${esc(flashCmd(it))}</div>
+      <div class="flash-cmd-wrap">
+        <div class="flash-cmd">${esc(flashCmd(it))}</div>
+      </div>
     </article>
   `).join('');
 
   grid.querySelectorAll('[data-cmd]').forEach(btn => {
     btn.addEventListener('click', async () => {
-      try{
-        await navigator.clipboard.writeText(btn.dataset.cmd);
-        const original = btn.textContent;
-        btn.textContent = '✓ Đã copy';
-        btn.classList.add('copied');
-        setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1600);
-      }catch(e){ /* clipboard unavailable, silently ignore */ }
+      try{ await navigator.clipboard.writeText(btn.dataset.cmd); toast('✓ Đã copy lệnh flash'); }
+      catch(e){ toast('Không copy được — trình duyệt chặn clipboard'); }
+    });
+  });
+  grid.querySelectorAll('[data-link]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const url = new URL(btn.dataset.link, window.location.href).href;
+      try{ await navigator.clipboard.writeText(url); toast('✓ Đã copy link tải'); }
+      catch(e){ toast('Không copy được — trình duyệt chặn clipboard'); }
     });
   });
 }
@@ -289,23 +399,45 @@ function buildTabs(){
 function updateStats(){
   document.getElementById('stat-count').textContent = ALL.length;
   document.getElementById('stat-boards').textContent = new Set(ALL.map(i => i.board)).size;
+  const totalMB = ALL.reduce((sum, i) => sum + parseSizeMB(i.size), 0);
+  document.getElementById('stat-size').textContent = totalMB ? `${totalMB.toFixed(1)} MB` : '—';
   const dates = ALL.map(i => i.date).filter(Boolean).sort();
   document.getElementById('stat-updated').textContent = dates.length ? dates[dates.length-1] : '—';
 }
 
 fetch('firmware.json')
-  .then(r => r.json())
+  .then(r => { if(!r.ok) throw new Error('http ' + r.status); return r.json(); })
   .then(data => {
-    ALL = data;
+    ALL = Array.isArray(data) ? data : [];
     buildTabs();
     updateStats();
     render();
   })
   .catch(() => {
-    grid.innerHTML = `<div class="empty">&gt; lỗi: không đọc được firmware.json. Kiểm tra file có tồn tại và đúng định dạng JSON.</div>`;
+    grid.innerHTML = `<div class="empty">&gt; lỗi: không đọc được firmware.json.<br>Kiểm tra file có tồn tại ở gốc repo và đúng định dạng JSON.<br><button class="btn btn-ghost" id="retry-fetch">Thử lại</button></div>`;
+    document.getElementById('retry-fetch')?.addEventListener('click', () => location.reload());
   });
 
 searchEl.addEventListener('input', render);
+sortEl.addEventListener('change', render);
+
+document.getElementById('view-grid').addEventListener('click', () => {
+  viewMode = 'grid';
+  document.getElementById('view-grid').classList.add('active');
+  document.getElementById('view-list').classList.remove('active');
+  render();
+});
+document.getElementById('view-list').addEventListener('click', () => {
+  viewMode = 'list';
+  document.getElementById('view-list').classList.add('active');
+  document.getElementById('view-grid').classList.remove('active');
+  render();
+});
+
+window.addEventListener('scroll', () => {
+  topBtn.classList.toggle('show', window.scrollY > 400);
+});
+topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
 </script>
 </body>
 </html>
