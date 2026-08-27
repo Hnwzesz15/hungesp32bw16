@@ -47,6 +47,67 @@
   a{color:inherit;}
   :focus-visible{outline:2px solid var(--trace); outline-offset:2px;}
 
+  /* ---------- manual flash panel ---------- */
+  .mf-panel{
+    margin-top:14px; background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
+    padding:20px 22px 22px;
+  }
+  .mf-toolbar{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+  .mf-baud-inline{margin-left:auto; display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);}
+  .mf-baud-inline select{padding:6px 22px 6px 8px; font-size:12px;}
+  .mf-hint{color:var(--muted); font-size:12.5px; line-height:1.6; margin:0 0 14px;}
+  .mf-hint code{color:var(--trace);}
+
+  .mf-files{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
+  .mf-file-row{display:flex; gap:8px; align-items:center;}
+  .mf-file-row input[type="file"]{
+    flex:1; min-width:0; background:#081209; border:1px solid rgba(61,220,132,.25); color:var(--muted);
+    font-family:'JetBrains Mono',monospace; font-size:12px; padding:8px 10px; border-radius:var(--radius);
+  }
+  .mf-file-row input[type="file"]::file-selector-button{
+    background:var(--trace); color:#062012; border:none; border-radius:var(--radius);
+    padding:6px 10px; margin-right:10px; font-family:'JetBrains Mono',monospace; font-size:11.5px;
+    font-weight:700; cursor:pointer;
+  }
+  .mf-addr-input{width:110px; flex:none; text-align:center;}
+  .mf-remove-row{color:var(--danger); border-color:rgba(226,114,91,.4);}
+  .mf-remove-row:hover{border-color:var(--danger); background:rgba(226,114,91,.1);}
+
+  .mf-advanced{margin:14px 0 0; border:1px solid rgba(61,220,132,.16); border-radius:var(--radius); background:#0c1e14;}
+  .mf-advanced summary{
+    cursor:pointer; list-style:none; padding:12px 16px; font-family:'JetBrains Mono',monospace;
+    font-size:12.5px; color:var(--trace); user-select:none;
+  }
+  .mf-advanced summary::-webkit-details-marker{display:none;}
+  .mf-adv-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:14px; padding:4px 16px 16px;
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);
+  }
+  @media (max-width:700px){ .mf-adv-grid{grid-template-columns:1fr 1fr;} }
+  .mf-adv-grid label{display:flex; flex-direction:column; gap:6px;}
+  .mf-adv-grid select{width:100%;}
+  .mf-checkbox{flex-direction:row !important; align-items:center; gap:8px !important; grid-column:span 1;}
+  .mf-checkbox input[type="checkbox"]{accent-color:var(--trace); width:15px; height:15px;}
+
+  .mf-actions{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:16px;}
+  .mf-progress{display:flex; align-items:center; gap:10px; flex:1; min-width:160px;}
+  .mf-progress-track{flex:1; height:8px; background:#081209; border:1px solid rgba(61,220,132,.25); border-radius:var(--radius); overflow:hidden;}
+  .mf-progress-bar{height:100%; width:0%; background:var(--trace); box-shadow:0 0 8px rgba(61,220,132,.5); transition:width .2s ease;}
+  #mf-progress-label{font-size:11.5px; color:var(--muted); min-width:38px; text-align:right;}
+
+  .mf-console-wrap{margin-top:18px; border:1px solid rgba(61,220,132,.25); border-radius:var(--radius); overflow:hidden;}
+  .mf-console-head{
+    display:flex; justify-content:space-between; align-items:center; padding:8px 12px;
+    background:var(--panel-2); border-bottom:1px dashed rgba(61,220,132,.2);
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+  }
+  .mf-console{
+    margin:0; background:#050c07; color:var(--trace-dim); font-family:'JetBrains Mono',monospace;
+    font-size:12px; line-height:1.6; padding:14px; height:260px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;
+  }
+  .mf-console .ln-err{color:var(--danger);}
+  .mf-console .ln-ok{color:var(--trace);}
+
   /* ---------- top nav (splits site into Info / Firmware) ---------- */
   .top-nav{
     display:flex; gap:4px; align-items:center;
@@ -360,6 +421,7 @@
   <nav class="top-nav" aria-label="Điều hướng chính">
     <button class="nav-link active" data-view="info">Giới thiệu</button>
     <button class="nav-link" data-view="firmware">Firmware</button>
+    <button class="nav-link" data-view="manual">⚡ Tự Flash File .bin</button>
   </nav>
 
   <section id="view-info" class="page-view active">
@@ -481,6 +543,96 @@
     <div class="skeleton"></div>
     <div class="skeleton"></div>
   </main>
+
+  </section>
+
+  <section id="view-manual" class="page-view">
+
+  <p class="section-eyebrow">// TỰ FLASH FILE .BIN — NÂNG CAO</p>
+  <div id="manual-compat-banner"></div>
+
+  <div class="mf-panel">
+    <div class="mf-toolbar">
+      <button id="mf-connect" class="btn btn-primary">🔌 Kết nối thiết bị</button>
+      <button id="mf-disconnect" class="btn btn-ghost" style="display:none">⏏ Ngắt kết nối</button>
+      <span id="mf-chip-badge" class="badge" style="display:none"></span>
+      <label class="mf-checkbox mf-baud-inline">
+        Baud
+        <select id="mf-baud">
+          <option value="115200">115200</option>
+          <option value="230400">230400</option>
+          <option value="460800" selected>460800</option>
+          <option value="921600">921600</option>
+        </select>
+      </label>
+    </div>
+
+    <p class="mf-hint">Chọn 1 hoặc nhiều file <code>.bin</code>, mỗi file ghi vào một địa chỉ (offset) riêng — giống <code>esptool.py write_flash addr1 file1.bin addr2 file2.bin ...</code></p>
+
+    <div class="mf-files" id="mf-files">
+      <div class="mf-file-row" data-row>
+        <input type="file" accept=".bin,.bin.gz,application/octet-stream" class="mf-file-input">
+        <input type="text" class="mf-addr-input mono" value="0x0" spellcheck="false">
+        <button class="btn btn-ghost btn-icon mf-remove-row" type="button" title="Xoá dòng">✕</button>
+      </div>
+    </div>
+    <button id="mf-add-file" class="btn btn-ghost" type="button">+ Thêm file ở địa chỉ khác</button>
+
+    <details class="mf-advanced">
+      <summary>⚙ Tuỳ chọn nâng cao</summary>
+      <div class="mf-adv-grid">
+        <label>Flash mode
+          <select id="mf-mode">
+            <option value="keep" selected>Giữ nguyên (keep)</option>
+            <option value="qio">qio</option>
+            <option value="qout">qout</option>
+            <option value="dio">dio</option>
+            <option value="dout">dout</option>
+          </select>
+        </label>
+        <label>Flash frequency
+          <select id="mf-freq">
+            <option value="keep" selected>Giữ nguyên (keep)</option>
+            <option value="80m">80MHz</option>
+            <option value="40m">40MHz</option>
+            <option value="26m">26MHz</option>
+            <option value="20m">20MHz</option>
+          </select>
+        </label>
+        <label>Flash size
+          <select id="mf-size">
+            <option value="keep" selected>Giữ nguyên (keep)</option>
+            <option value="1MB">1MB</option>
+            <option value="2MB">2MB</option>
+            <option value="4MB">4MB</option>
+            <option value="8MB">8MB</option>
+            <option value="16MB">16MB</option>
+            <option value="32MB">32MB</option>
+          </select>
+        </label>
+        <label class="mf-checkbox"><input type="checkbox" id="mf-erase"> Xoá toàn bộ flash trước khi ghi</label>
+        <label class="mf-checkbox"><input type="checkbox" id="mf-compress" checked> Nén dữ liệu khi truyền (nhanh hơn)</label>
+        <label class="mf-checkbox"><input type="checkbox" id="mf-reset" checked> Reset board sau khi flash xong</label>
+      </div>
+    </details>
+
+    <div class="mf-actions">
+      <button id="mf-flash" class="btn btn-flash" disabled>⚡ Bắt đầu Flash</button>
+      <button id="mf-erase-only" class="btn btn-secondary" disabled>🧹 Chỉ xoá Flash</button>
+      <div class="mf-progress" id="mf-progress" style="display:none">
+        <div class="mf-progress-track"><div class="mf-progress-bar" id="mf-progress-bar"></div></div>
+        <span id="mf-progress-label" class="mono">0%</span>
+      </div>
+    </div>
+
+    <div class="mf-console-wrap">
+      <div class="mf-console-head">
+        <span>Console Output</span>
+        <button id="mf-console-clear" class="btn btn-ghost btn-icon" type="button" title="Xoá log">🗑</button>
+      </div>
+      <pre class="mf-console" id="mf-console">&gt; Sẵn sàng. Bấm "Kết nối thiết bị" để bắt đầu...</pre>
+    </div>
+  </div>
 
   </section>
 
@@ -726,6 +878,211 @@ window.addEventListener('scroll', () => {
   topBtn.classList.toggle('show', window.scrollY > 400);
 });
 topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
+
+// =====================================================================
+// TAB "TỰ FLASH FILE .BIN" — dùng esptool-js (Espressif) qua Web Serial
+// =====================================================================
+(function manualFlashTab(){
+  const manualBanner = document.getElementById('manual-compat-banner');
+  if(canFlashInBrowser){
+    manualBanner.innerHTML = `<div class="compat-banner ok"><span class="ic">✓</span><div><b>Trình duyệt này hỗ trợ Web Serial.</b> Bạn có thể kết nối thẳng board và tự chọn file .bin để flash với đầy đủ tuỳ chọn nâng cao bên dưới.</div></div>`;
+  }else{
+    manualBanner.innerHTML = `<div class="compat-banner warn"><span class="ic">⚠</span><div><b>Trình duyệt hoặc thiết bị này chưa hỗ trợ Web Serial.</b> Dùng <b>Chrome</b> hoặc <b>Edge trên máy tính</b> để dùng được tab này.</div></div>`;
+    return; // don't wire up controls if unsupported
+  }
+
+  const $ = (id) => document.getElementById(id);
+  const filesWrap = $('mf-files');
+  const addFileBtn = $('mf-add-file');
+  const connectBtn = $('mf-connect');
+  const disconnectBtn = $('mf-disconnect');
+  const chipBadge = $('mf-chip-badge');
+  const flashBtn = $('mf-flash');
+  const eraseOnlyBtn = $('mf-erase-only');
+  const progressWrap = $('mf-progress');
+  const progressBar = $('mf-progress-bar');
+  const progressLabel = $('mf-progress-label');
+  const consoleEl = $('mf-console');
+  const consoleClearBtn = $('mf-console-clear');
+  const baudSel = $('mf-baud');
+
+  let esploaderMod = null;   // cached dynamic import of esptool-js
+  let transport = null;
+  let esploader = null;
+  let connected = false;
+
+  function log(msg, cls){
+    const line = document.createElement('div');
+    if(cls) line.className = cls;
+    line.textContent = msg;
+    consoleEl.appendChild(line);
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+  }
+  const terminal = {
+    clean(){ consoleEl.innerHTML = ''; },
+    writeLine(data){ log(String(data)); },
+    write(data){ log(String(data)); },
+  };
+
+  consoleClearBtn.addEventListener('click', () => { consoleEl.innerHTML = ''; log('&gt; đã xoá log.'.replace('&gt;','>')); });
+
+  function addFileRow(){
+    const row = document.createElement('div');
+    row.className = 'mf-file-row';
+    row.setAttribute('data-row','');
+    row.innerHTML = `
+      <input type="file" accept=".bin,.bin.gz,application/octet-stream" class="mf-file-input">
+      <input type="text" class="mf-addr-input mono" value="0x0" spellcheck="false">
+      <button class="btn btn-ghost btn-icon mf-remove-row" type="button" title="Xoá dòng">✕</button>
+    `;
+    filesWrap.appendChild(row);
+    row.querySelector('.mf-remove-row').addEventListener('click', () => {
+      if(filesWrap.children.length > 1) row.remove();
+      else toast('Cần ít nhất 1 file');
+    });
+  }
+  filesWrap.querySelectorAll('.mf-remove-row').forEach(b => {
+    b.addEventListener('click', () => {
+      if(filesWrap.children.length > 1) b.closest('.mf-file-row').remove();
+      else toast('Cần ít nhất 1 file');
+    });
+  });
+  addFileBtn.addEventListener('click', addFileRow);
+
+  function parseAddress(str){
+    const v = String(str).trim();
+    const n = v.toLowerCase().startsWith('0x') ? parseInt(v, 16) : parseInt(v, 10);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  async function loadLib(){
+    if(!esploaderMod){
+      log('> đang tải esptool-js từ CDN...');
+      esploaderMod = await import('https://unpkg.com/esptool-js/lib/index.js');
+    }
+    return esploaderMod;
+  }
+
+  function setConnectedUI(chipName){
+    connected = true;
+    connectBtn.style.display = 'none';
+    disconnectBtn.style.display = '';
+    chipBadge.style.display = '';
+    chipBadge.textContent = chipName || 'Đã kết nối';
+    flashBtn.disabled = false;
+    eraseOnlyBtn.disabled = false;
+  }
+  function setDisconnectedUI(){
+    connected = false;
+    connectBtn.style.display = '';
+    disconnectBtn.style.display = 'none';
+    chipBadge.style.display = 'none';
+    flashBtn.disabled = true;
+    eraseOnlyBtn.disabled = true;
+  }
+
+  connectBtn.addEventListener('click', async () => {
+    try{
+      connectBtn.disabled = true;
+      const { ESPLoader, Transport } = await loadLib();
+      const port = await navigator.serial.requestPort();
+      transport = new Transport(port, true);
+      esploader = new ESPLoader({
+        transport,
+        baudrate: parseInt(baudSel.value, 10),
+        terminal,
+        debugLogging: false,
+      });
+      log('> đang kết nối và nhận diện chip...');
+      const chipName = await esploader.main();
+      log(`> đã kết nối: ${chipName}`, 'ln-ok');
+      setConnectedUI(chipName);
+      toast('✓ Đã kết nối ' + chipName);
+    }catch(err){
+      log('> lỗi kết nối: ' + (err && err.message ? err.message : err), 'ln-err');
+      toast('Không kết nối được thiết bị');
+    }finally{
+      connectBtn.disabled = false;
+    }
+  });
+
+  disconnectBtn.addEventListener('click', async () => {
+    try{ if(transport) await transport.disconnect(); }catch(e){}
+    esploader = null; transport = null;
+    setDisconnectedUI();
+    log('> đã ngắt kết nối.');
+  });
+
+  eraseOnlyBtn.addEventListener('click', async () => {
+    if(!esploader) return;
+    if(!confirm('Xoá toàn bộ flash trên board? Thao tác không thể hoàn tác.')) return;
+    try{
+      eraseOnlyBtn.disabled = true;
+      log('> đang xoá toàn bộ flash...');
+      await esploader.eraseFlash();
+      log('> xoá flash hoàn tất.', 'ln-ok');
+      toast('✓ Đã xoá flash');
+    }catch(err){
+      log('> lỗi khi xoá flash: ' + (err && err.message ? err.message : err), 'ln-err');
+      toast('Xoá flash thất bại');
+    }finally{
+      eraseOnlyBtn.disabled = false;
+    }
+  });
+
+  flashBtn.addEventListener('click', async () => {
+    if(!esploader) return;
+    const rows = [...filesWrap.querySelectorAll('.mf-file-row')];
+    const fileArray = [];
+    for(const row of rows){
+      const fileInput = row.querySelector('.mf-file-input');
+      const addrInput = row.querySelector('.mf-addr-input');
+      const file = fileInput.files[0];
+      if(!file){ toast('Có dòng chưa chọn file'); return; }
+      const address = parseAddress(addrInput.value);
+      if(Number.isNaN(address)){ toast('Địa chỉ không hợp lệ: ' + addrInput.value); return; }
+      const data = new Uint8Array(await file.arrayBuffer());
+      fileArray.push({ data, address, name: file.name });
+    }
+    if(!fileArray.length){ toast('Chưa có file nào để flash'); return; }
+
+    const flashMode = $('mf-mode').value;
+    const flashFreq = $('mf-freq').value;
+    const flashSize = $('mf-size').value;
+    const eraseAll = $('mf-erase').checked;
+    const compress = $('mf-compress').checked;
+    const doReset = $('mf-reset').checked;
+
+    flashBtn.disabled = true; eraseOnlyBtn.disabled = true;
+    progressWrap.style.display = 'flex';
+    progressBar.style.width = '0%'; progressLabel.textContent = '0%';
+    log(`> bắt đầu flash ${fileArray.length} file...`);
+
+    try{
+      await esploader.writeFlash({
+        fileArray: fileArray.map(f => ({ data: f.data, address: f.address })),
+        flashMode, flashFreq, flashSize,
+        eraseAll, compress,
+        reportProgress: (fileIndex, written, total) => {
+          const pct = total ? Math.round((written / total) * 100) : 0;
+          progressBar.style.width = pct + '%';
+          progressLabel.textContent = `File ${fileIndex + 1}/${fileArray.length} · ${pct}%`;
+        },
+      });
+      log('> ghi flash hoàn tất, đã xác minh dữ liệu.', 'ln-ok');
+      if(doReset){
+        await esploader.after('hard_reset');
+        log('> đã reset board.');
+      }
+      toast('✓ Flash thành công');
+    }catch(err){
+      log('> lỗi khi flash: ' + (err && err.message ? err.message : err), 'ln-err');
+      toast('Flash thất bại — xem console bên dưới');
+    }finally{
+      flashBtn.disabled = false; eraseOnlyBtn.disabled = false;
+    }
+  });
+})();
 </script>
 </body>
 </html>
