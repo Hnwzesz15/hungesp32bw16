@@ -1005,6 +1005,19 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
   let transport = null;
   let esploader = null;
   let connected = false;
+  let currentPort = null;    // tracked so we can detect physical unplug via navigator.serial 'disconnect'
+
+  // Web Serial fires this on navigator.serial whenever ANY paired device disappears
+  // (cable pulled, board reset into a different mode, etc). Compare against the port
+  // we're actually using before resetting the UI, since other devices can also fire it.
+  navigator.serial.addEventListener('disconnect', (event) => {
+    if(currentPort && event.target === currentPort){
+      log('Thiết bị đã bị rút hoặc mất kết nối.', 'ln-err');
+      toast('⚠ Đã mất kết nối thiết bị');
+      esploader = null; transport = null; currentPort = null;
+      setDisconnectedUI();
+    }
+  });
 
   function timestamp(){
     const d = new Date();
@@ -1112,6 +1125,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       }
       const { ESPLoader, Transport } = await loadLib();
       transport = new Transport(port, true);
+      currentPort = port;
       esploader = new ESPLoader({
         transport,
         baudrate: parseInt(baudSel.value, 10),
@@ -1126,6 +1140,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     }catch(err){
       log('> lỗi kết nối: ' + (err && err.message ? err.message : err), 'ln-err');
       toast('Không kết nối được thiết bị');
+      esploader = null; transport = null; currentPort = null;
     }finally{
       connectBtn.disabled = false;
     }
@@ -1133,7 +1148,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
 
   disconnectBtn.addEventListener('click', async () => {
     try{ if(transport) await transport.disconnect(); }catch(e){}
-    esploader = null; transport = null;
+    esploader = null; transport = null; currentPort = null;
     setDisconnectedUI();
     log('> đã ngắt kết nối.');
   });
