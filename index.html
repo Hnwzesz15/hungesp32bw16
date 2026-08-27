@@ -984,8 +984,24 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
   connectBtn.addEventListener('click', async () => {
     try{
       connectBtn.disabled = true;
+      // IMPORTANT: requestPort() must fire immediately inside the click handler,
+      // before any other await — otherwise the browser no longer treats this as
+      // a user gesture and silently refuses to show the port picker.
+      let port;
+      try{
+        port = await navigator.serial.requestPort();
+      }catch(pickErr){
+        // User closed the picker, or no device was selected — not a real error.
+        connectBtn.disabled = false;
+        if(pickErr && pickErr.name === 'NotFoundError'){
+          log('> đã huỷ chọn cổng COM.');
+        }else{
+          log('> không thể mở hộp thoại chọn cổng: ' + (pickErr && pickErr.message ? pickErr.message : pickErr), 'ln-err');
+          toast('Không mở được hộp thoại chọn cổng COM');
+        }
+        return;
+      }
       const { ESPLoader, Transport } = await loadLib();
-      const port = await navigator.serial.requestPort();
       transport = new Transport(port, true);
       esploader = new ESPLoader({
         transport,
