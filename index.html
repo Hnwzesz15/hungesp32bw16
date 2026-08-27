@@ -367,30 +367,75 @@
   /* ---------- custom confirm modal ---------- */
   .confirm-overlay{
     position:fixed; inset:0; z-index:100; display:none;
-    align-items:center; justify-content:center;
-    background:rgba(5,10,7,.7); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center; padding:20px;
+    background:rgba(4,8,6,.78); backdrop-filter:blur(5px);
     opacity:0; transition:opacity .18s ease;
   }
   .confirm-overlay.show{display:flex;}
   .confirm-overlay.visible{opacity:1;}
+
   .confirm-box{
-    width:min(360px, 90vw); background:linear-gradient(180deg, var(--panel-2), var(--panel));
-    border:1px solid rgba(226,114,91,.4); border-radius:var(--radius);
-    padding:26px 24px 22px; text-align:center;
-    box-shadow:0 20px 50px rgba(0,0,0,.5), 0 0 0 1px rgba(226,114,91,.08);
+    width:min(380px, 100%);
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border:1px solid rgba(226,114,91,.4);
+    border-radius:var(--radius);
+    padding:0 0 24px;
+    text-align:center;
+    box-shadow:0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(226,114,91,.08), 0 0 40px rgba(226,114,91,.06);
     transform:scale(.94); transition:transform .18s ease;
+    overflow:hidden; position:relative;
   }
   .confirm-overlay.visible .confirm-box{transform:scale(1);}
-  .confirm-ic{font-size:26px; color:var(--danger); margin-bottom:10px;}
-  .confirm-box h3{
-    font-family:'JetBrains Mono',monospace; font-size:16px; margin:0 0 10px; color:var(--text);
-    letter-spacing:.03em;
+
+  /* hazard-stripe header band */
+  .confirm-hazard{
+    height:10px;
+    background:repeating-linear-gradient(
+      -45deg,
+      var(--danger) 0 10px,
+      #1a0f0c 10px 20px
+    );
+    opacity:.85;
   }
-  .confirm-box p{color:var(--muted); font-size:13px; line-height:1.6; margin:0 0 20px;}
-  .confirm-actions{display:flex; gap:10px; justify-content:center;}
+
+  .confirm-icwrap{
+    width:52px; height:52px; margin:22px auto 4px;
+    border:1.5px solid rgba(226,114,91,.5); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle, rgba(226,114,91,.14), transparent 70%);
+    position:relative;
+  }
+  .confirm-icwrap::after{
+    content:""; position:absolute; inset:-5px; border-radius:50%;
+    border:1px solid rgba(226,114,91,.2);
+    animation:confirm-pulse 1.8s ease-out infinite;
+  }
+  @keyframes confirm-pulse{
+    0%{ transform:scale(.9); opacity:.7; }
+    100%{ transform:scale(1.35); opacity:0; }
+  }
+  .confirm-ic{font-size:22px; color:var(--danger); line-height:1;}
+
+  .confirm-box h3{
+    font-family:'JetBrains Mono',monospace; font-size:16px; margin:14px 0 8px; color:var(--text);
+    letter-spacing:.03em; padding:0 24px;
+  }
+  .confirm-box p{
+    color:var(--muted); font-size:13px; line-height:1.6; margin:0 24px 22px;
+  }
+
+  .confirm-actions{display:flex; gap:10px; justify-content:center; padding:0 24px;}
   .confirm-actions .btn{flex:1; justify-content:center;}
-  .confirm-actions .btn-flash{background:var(--danger); border-color:var(--danger); color:#fff;}
-  .confirm-actions .btn-flash:hover{background:#f0937c;}
+  .confirm-actions .btn-ghost{border-color:rgba(61,220,132,.35);}
+  .confirm-actions .btn-flash{
+    background:var(--danger); border-color:var(--danger); color:#fff; font-weight:700;
+    box-shadow:0 0 0 rgba(226,114,91,.4);
+  }
+  .confirm-actions .btn-flash:hover{background:#f0937c; box-shadow:0 0 14px rgba(226,114,91,.4);}
+
+  @media (prefers-reduced-motion: reduce){
+    .confirm-icwrap::after{ animation:none; }
+  }
 
   /* toasts */
   .toast-stack{position:fixed; bottom:20px; right:20px; z-index:50; display:flex; flex-direction:column; gap:8px;}
@@ -680,7 +725,8 @@
 
 <div class="confirm-overlay" id="confirm-overlay">
   <div class="confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
-    <div class="confirm-ic">⚠</div>
+    <div class="confirm-hazard"></div>
+    <div class="confirm-icwrap"><span class="confirm-ic">⚠</span></div>
     <h3 id="confirm-title">Erase Flash</h3>
     <p id="confirm-msg">Xoá toàn bộ flash trên board? Thao tác không thể hoàn tác.</p>
     <div class="confirm-actions">
