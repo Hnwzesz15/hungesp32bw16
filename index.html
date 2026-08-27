@@ -2,13 +2,6 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<script type="importmap">
-{
-  "imports": {
-    "pako": "https://cdn.jsdelivr.net/npm/pako@2.1.0/+esm"
-  }
-}
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>hungtesp · Firmware Hub</title>
 <meta name="description" content="Kho firmware ESP32-S3 của hungtesp — flash trực tiếp qua trình duyệt, không cần cài phần mềm.">
@@ -965,7 +958,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
   async function loadLib(){
     if(!esploaderMod){
       log('> đang tải esptool-js từ CDN...');
-      esploaderMod = await import('https://unpkg.com/esptool-js/lib/index.js');
+      esploaderMod = await import('https://unpkg.com/esptool-js/bundle.js');
     }
     return esploaderMod;
   }
