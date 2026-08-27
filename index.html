@@ -101,6 +101,10 @@
     background:var(--panel-2); border-bottom:1px dashed rgba(61,220,132,.2);
     font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
   }
+  .mf-console-head .label{display:inline-flex; align-items:center; gap:7px;}
+  .mf-console-head .dot{width:6px; height:6px; border-radius:50%; background:var(--trace); box-shadow:0 0 6px var(--trace); animation:blink 1.6s infinite; flex-shrink:0;}
+  .mf-console .ts{color:var(--muted); opacity:.75;}
+  .mf-console .tag{color:var(--gold);}
   .mf-console{
     margin:0; background:#050c07; color:var(--trace-dim); font-family:'JetBrains Mono',monospace;
     font-size:12px; line-height:1.6; padding:14px; height:260px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;
@@ -368,7 +372,7 @@
   .confirm-overlay{
     position:fixed; inset:0; z-index:100; display:none;
     align-items:center; justify-content:center; padding:20px;
-    background:rgba(4,8,6,.8); backdrop-filter:blur(6px);
+    background:rgba(4,8,6,.82); backdrop-filter:blur(6px);
     opacity:0; transition:opacity .18s ease;
   }
   .confirm-overlay.show{display:flex;}
@@ -376,38 +380,38 @@
 
   .confirm-box{
     width:min(400px, 100%);
-    background:var(--panel);
-    border-top:2px solid var(--danger);
+    background:linear-gradient(165deg, var(--panel-2) 0%, var(--panel) 60%);
+    border-left:3px solid #b6604a;
     border-radius:var(--radius);
-    padding:32px 28px 24px;
+    padding:26px 26px 22px;
     text-align:left;
-    box-shadow:0 30px 70px rgba(0,0,0,.6), 0 0 60px rgba(226,114,91,.05);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      0 30px 70px rgba(0,0,0,.6),
+      0 1px 0 rgba(0,0,0,.4);
     transform:translateY(6px) scale(.97); transition:transform .18s ease;
   }
   .confirm-overlay.visible .confirm-box{transform:translateY(0) scale(1);}
 
-  .confirm-icwrap{
-    width:44px; height:44px; margin-bottom:16px;
-    background:rgba(226,114,91,.1); border:1px solid rgba(226,114,91,.3);
-    display:flex; align-items:center; justify-content:center;
-  }
-  .confirm-icwrap svg{width:24px; height:24px; display:block;}
+  .confirm-head{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .confirm-icwrap svg{width:19px; height:19px; display:block;}
 
   .confirm-box h3{
-    font-family:'Inter',sans-serif; font-weight:700; font-size:19px;
-    margin:0 0 10px; color:var(--text); letter-spacing:-.01em;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:17.5px;
+    margin:0; color:var(--text); letter-spacing:-.01em;
   }
   .confirm-box p{
-    color:var(--muted); font-size:13.5px; line-height:1.65; margin:0 0 26px;
+    color:var(--muted); font-size:13.5px; line-height:1.65; margin:0 0 24px;
   }
 
   .confirm-actions{display:flex; gap:10px; justify-content:flex-end;}
-  .confirm-actions .btn{padding:10px 18px;}
-  .confirm-actions .btn-ghost{border-color:rgba(61,220,132,.35);}
+  .confirm-actions .btn{padding:9px 17px;}
+  .confirm-actions .btn-ghost{border-color:rgba(61,220,132,.3); color:var(--muted);}
+  .confirm-actions .btn-ghost:hover{color:var(--trace); border-color:var(--trace);}
   .confirm-actions .btn-flash{
-    background:var(--danger); border-color:var(--danger); color:#fff; font-weight:700;
+    background:#b6604a; border-color:#b6604a; color:#f5ece8; font-weight:600;
   }
-  .confirm-actions .btn-flash:hover{background:#f0937c;}
+  .confirm-actions .btn-flash:hover{background:#c67256;}
 
   /* toasts */
   .toast-stack{position:fixed; bottom:20px; right:20px; z-index:50; display:flex; flex-direction:column; gap:8px;}
@@ -672,10 +676,10 @@
 
     <div class="mf-console-wrap">
       <div class="mf-console-head">
-        <span>Console Output</span>
+        <span class="label"><span class="dot"></span>CONSOLE_OUTPUT</span>
         <button id="mf-console-clear" class="btn btn-ghost btn-icon" type="button" title="Xoá log">🗑</button>
       </div>
-      <pre class="mf-console" id="mf-console">&gt; Sẵn sàng. Bấm "Kết nối thiết bị" để bắt đầu...</pre>
+      <pre class="mf-console" id="mf-console"></pre>
     </div>
   </div>
 
@@ -697,14 +701,16 @@
 
 <div class="confirm-overlay" id="confirm-overlay">
   <div class="confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
-    <div class="confirm-icwrap">
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 3.5L22 20.5H2L12 3.5Z" stroke="#e2725b" stroke-width="1.8" stroke-linejoin="round"/>
-        <line x1="12" y1="9.5" x2="12" y2="14.5" stroke="#e2725b" stroke-width="1.8" stroke-linecap="round"/>
-        <circle cx="12" cy="17.3" r="1" fill="#e2725b"/>
-      </svg>
+    <div class="confirm-head">
+      <span class="confirm-icwrap">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3.5L22 20.5H2L12 3.5Z" stroke="#c67256" stroke-width="1.6" stroke-linejoin="round"/>
+          <line x1="12" y1="9.5" x2="12" y2="14.5" stroke="#c67256" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="12" cy="17.3" r="1" fill="#c67256"/>
+        </svg>
+      </span>
+      <h3 id="confirm-title">Erase Flash</h3>
     </div>
-    <h3 id="confirm-title">Erase Flash</h3>
     <p id="confirm-msg">Xoá toàn bộ flash trên board? Thao tác không thể hoàn tác.</p>
     <div class="confirm-actions">
       <button id="confirm-cancel" class="btn btn-ghost">Huỷ</button>
@@ -1000,20 +1006,34 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
   let esploader = null;
   let connected = false;
 
+  function timestamp(){
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
   function log(msg, cls){
     const line = document.createElement('div');
     if(cls) line.className = cls;
-    line.textContent = msg;
+    const ts = document.createElement('span');
+    ts.className = 'ts';
+    ts.textContent = `[${timestamp()}] `;
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = '[ESP] ';
+    line.appendChild(ts);
+    line.appendChild(tag);
+    line.appendChild(document.createTextNode(String(msg).replace(/^>\s*/, '')));
     consoleEl.appendChild(line);
     consoleEl.scrollTop = consoleEl.scrollHeight;
   }
+  log('Sẵn sàng. Bấm "Kết nối thiết bị" để bắt đầu...');
   const terminal = {
     clean(){ consoleEl.innerHTML = ''; },
     writeLine(data){ log(String(data)); },
     write(data){ log(String(data)); },
   };
 
-  consoleClearBtn.addEventListener('click', () => { consoleEl.innerHTML = ''; log('&gt; đã xoá log.'.replace('&gt;','>')); });
+  consoleClearBtn.addEventListener('click', () => { consoleEl.innerHTML = ''; log('Đã xoá log.'); });
 
   function addFileRow(){
     const row = document.createElement('div');
