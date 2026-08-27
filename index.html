@@ -12,7 +12,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230f2317'/%3E%3Crect x='9' y='9' width='14' height='14' rx='1' fill='none' stroke='%233ddc84' stroke-width='2'/%3E%3Crect x='13' y='13' width='6' height='6' fill='%233ddc84'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
 <style>
   :root{
@@ -368,74 +368,46 @@
   .confirm-overlay{
     position:fixed; inset:0; z-index:100; display:none;
     align-items:center; justify-content:center; padding:20px;
-    background:rgba(4,8,6,.78); backdrop-filter:blur(5px);
+    background:rgba(4,8,6,.8); backdrop-filter:blur(6px);
     opacity:0; transition:opacity .18s ease;
   }
   .confirm-overlay.show{display:flex;}
   .confirm-overlay.visible{opacity:1;}
 
   .confirm-box{
-    width:min(380px, 100%);
-    background:linear-gradient(180deg, var(--panel-2), var(--panel));
-    border:1px solid rgba(226,114,91,.4);
+    width:min(400px, 100%);
+    background:var(--panel);
+    border-top:2px solid var(--danger);
     border-radius:var(--radius);
-    padding:0 0 24px;
-    text-align:center;
-    box-shadow:0 24px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(226,114,91,.08), 0 0 40px rgba(226,114,91,.06);
-    transform:scale(.94); transition:transform .18s ease;
-    overflow:hidden; position:relative;
+    padding:32px 28px 24px;
+    text-align:left;
+    box-shadow:0 30px 70px rgba(0,0,0,.6), 0 0 60px rgba(226,114,91,.05);
+    transform:translateY(6px) scale(.97); transition:transform .18s ease;
   }
-  .confirm-overlay.visible .confirm-box{transform:scale(1);}
-
-  /* hazard-stripe header band */
-  .confirm-hazard{
-    height:10px;
-    background:repeating-linear-gradient(
-      -45deg,
-      var(--danger) 0 10px,
-      #1a0f0c 10px 20px
-    );
-    opacity:.85;
-  }
+  .confirm-overlay.visible .confirm-box{transform:translateY(0) scale(1);}
 
   .confirm-icwrap{
-    width:52px; height:52px; margin:22px auto 4px;
-    border:1.5px solid rgba(226,114,91,.5); border-radius:50%;
+    width:44px; height:44px; margin-bottom:16px;
+    background:rgba(226,114,91,.1); border:1px solid rgba(226,114,91,.3);
     display:flex; align-items:center; justify-content:center;
-    background:radial-gradient(circle, rgba(226,114,91,.14), transparent 70%);
-    position:relative;
   }
-  .confirm-icwrap::after{
-    content:""; position:absolute; inset:-5px; border-radius:50%;
-    border:1px solid rgba(226,114,91,.2);
-    animation:confirm-pulse 1.8s ease-out infinite;
-  }
-  @keyframes confirm-pulse{
-    0%{ transform:scale(.9); opacity:.7; }
-    100%{ transform:scale(1.35); opacity:0; }
-  }
-  .confirm-ic{font-size:22px; color:var(--danger); line-height:1;}
+  .confirm-icwrap svg{width:24px; height:24px; display:block;}
 
   .confirm-box h3{
-    font-family:'JetBrains Mono',monospace; font-size:16px; margin:14px 0 8px; color:var(--text);
-    letter-spacing:.03em; padding:0 24px;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:19px;
+    margin:0 0 10px; color:var(--text); letter-spacing:-.01em;
   }
   .confirm-box p{
-    color:var(--muted); font-size:13px; line-height:1.6; margin:0 24px 22px;
+    color:var(--muted); font-size:13.5px; line-height:1.65; margin:0 0 26px;
   }
 
-  .confirm-actions{display:flex; gap:10px; justify-content:center; padding:0 24px;}
-  .confirm-actions .btn{flex:1; justify-content:center;}
+  .confirm-actions{display:flex; gap:10px; justify-content:flex-end;}
+  .confirm-actions .btn{padding:10px 18px;}
   .confirm-actions .btn-ghost{border-color:rgba(61,220,132,.35);}
   .confirm-actions .btn-flash{
     background:var(--danger); border-color:var(--danger); color:#fff; font-weight:700;
-    box-shadow:0 0 0 rgba(226,114,91,.4);
   }
-  .confirm-actions .btn-flash:hover{background:#f0937c; box-shadow:0 0 14px rgba(226,114,91,.4);}
-
-  @media (prefers-reduced-motion: reduce){
-    .confirm-icwrap::after{ animation:none; }
-  }
+  .confirm-actions .btn-flash:hover{background:#f0937c;}
 
   /* toasts */
   .toast-stack{position:fixed; bottom:20px; right:20px; z-index:50; display:flex; flex-direction:column; gap:8px;}
@@ -725,8 +697,13 @@
 
 <div class="confirm-overlay" id="confirm-overlay">
   <div class="confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
-    <div class="confirm-hazard"></div>
-    <div class="confirm-icwrap"><span class="confirm-ic">⚠</span></div>
+    <div class="confirm-icwrap">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3.5L22 20.5H2L12 3.5Z" stroke="#e2725b" stroke-width="1.8" stroke-linejoin="round"/>
+        <line x1="12" y1="9.5" x2="12" y2="14.5" stroke="#e2725b" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="12" cy="17.3" r="1" fill="#e2725b"/>
+      </svg>
+    </div>
     <h3 id="confirm-title">Erase Flash</h3>
     <p id="confirm-msg">Xoá toàn bộ flash trên board? Thao tác không thể hoàn tác.</p>
     <div class="confirm-actions">
