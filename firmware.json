@@ -6,17 +6,17 @@
     "date": "2026-08-23",
     "size": "2.98 MB",
     "description": "Firmware Flipper Zero cho màn hình OLED 0.96 inch.",
-    "file": "Flipper Zero Oled 0.96 1.1.5.bin"
+    "file": "Flipper_Zero_Oled_0.96_1.1.5.bin",
     "author": "hungtesp"
   },
   {
     "name": "TV B GONE",
     "board": "ESP32-C3 SUPER MINI",
-    "version": "1",
+    "version": "1.0.0",
     "date": "2026-08-23",
-    "size": "4 MB",
+    "size": "4.00 MB",
     "description": "TV B GONE cho esp32-c3 super mini",
-    "file": "tvbgone.bin"
+    "file": "tvbgone.bin",
     "author": "hungtesp"
   },
   {
@@ -25,8 +25,8 @@
     "version": "1.1.5",
     "date": "2026-08-23",
     "size": "2.99 MB",
-    "description": "Firmware Flipper Zero cho màn hình 1.47.",
-    "file": "147.bin"
+    "description": "Firmware Flipper Zero cho màn hình 1.47 inch.",
+    "file": "147.bin",
     "author": "hungtesp"
   }
 ]
