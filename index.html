@@ -91,8 +91,17 @@
   #mf-chip-badge.pop{animation:mf-badge-pop .3s ease;}
   @keyframes mf-badge-pop{from{opacity:0; transform:scale(.85);} to{opacity:1; transform:scale(1);}}
 
+  /* ---------- NÂNG CẤP GIAO DIỆN DÒNG FILE (HIỆU ỨNG THÊM MỚI) ---------- */
   .mf-files{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
-  .mf-file-row{display:flex; gap:8px; align-items:center;}
+  .mf-file-row{
+    display:flex; gap:8px; align-items:center; 
+    animation:fileRowIn .5s var(--ease-smooth); /* Hiệu ứng xuất hiện */
+  }
+  @keyframes fileRowIn{
+    0%{opacity:0; transform:translateY(-8px) scale(.97); filter:blur(4px);}
+    100%{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
+  }
+
   .mf-file-row input[type="file"]{
     flex:1; min-width:0; background:#081209; border:1px solid rgba(61,220,132,.25); color:var(--muted);
     font-family:'JetBrains Mono',monospace; font-size:12px; padding:8px 10px; border-radius:var(--radius);
@@ -108,6 +117,20 @@
   .mf-addr-input{width:110px; flex:none; text-align:center;}
   .mf-remove-row{color:var(--danger); border-color:rgba(226,114,91,.4);}
   .mf-remove-row:hover{border-color:var(--danger); background:rgba(226,114,91,.1);}
+
+  /* ---------- NÂNG CẤP NÚT THÊM FILE ---------- */
+  #mf-add-file{
+    position:relative;
+    transition:all .3s var(--ease-smooth);
+    letter-spacing:.03em;
+  }
+  #mf-add-file:hover{
+    transform:translateY(-2px);
+    box-shadow:0 4px 15px var(--glow-trace);
+    background:rgba(61,220,132,.08);
+    letter-spacing:.08em; 
+  }
+  #mf-add-file:active{transform:translateY(0) scale(.98);}
 
   /* ---------- NÂNG CẤP MỤC TUỲ CHỌN NÂNG CAO (SMOOTH ACCORDION) ---------- */
   .mf-advanced{
@@ -235,7 +258,7 @@
   @media (prefers-reduced-motion: reduce){
     .mf-led{animation:none;} .mf-led.on{animation:none;}
     .mf-progress-bar.active::after{animation:none;} .mf-console > div{animation:none;}
-    .btn, .mf-advanced summary, .mf-adv-grid {transition:none !important; animation:none !important;}
+    .btn, .mf-advanced summary, .mf-adv-grid, .mf-file-row {transition:none !important; animation:none !important;}
   }
   .mf-console .ln-err{color:var(--danger);}
   .mf-console .ln-ok{color:var(--trace);}
@@ -763,8 +786,8 @@
   <nav class="top-nav" aria-label="Điều hướng chính">
     <button class="nav-link active" data-view="info">Giới thiệu</button>
     <button class="nav-link" data-view="firmware">Firmware</button>
-    <button class="nav-link" data-view="manual">⚡ Web Flasher</button>
-    <button class="nav-link" data-view="serial">📟 Serial Monitor</button>
+    <button class="nav-link" data-view="manual">Web Flasher</button>
+    <button class="nav-link" data-view="serial">Serial Monitor</button>
   </nav>
 
   <section id="view-info" class="page-view active">
@@ -772,10 +795,10 @@
   <header>
     <div class="hero-grid">
       <div class="hero-text">
-        <span class="chip-mark"><span class="dot"></span>ESP32-S3 · FIRMWARE HUB</span>
+        <span class="chip-mark"><span class="dot"></span>ESP32 · FIRMWARE HUB</span>
         <h1><span class="brand"><span class="hung">hung</span><span>tesp</span></span><span class="deco">🎄</span></h1>
         <p class="boot-line">&gt; loading firmware_index.json ...</p>
-        <p class="lead">Firmware do mình tự build cho các board ESP32-S3 — cắm USB, bấm nút, flash thẳng ngay trên trình duyệt. Không cần cài esptool hay phần mềm gì thêm.</p>
+        <p class="lead">Firmware do mình tự build cho các board ESP32 — cắm USB, bấm nút, flash thẳng ngay trên trình duyệt. Không cần cài esptool hay phần mềm gì thêm.</p>
 
         <div class="readout">
           <div class="stat"><b id="stat-count">0</b><span>Firmware</span></div>
@@ -846,13 +869,13 @@
 
   <div class="guide">
     <div class="guide-tabs">
-      <button class="guide-tab active" data-guide="web">⚡ Cách flash qua Web</button>
+      <button class="guide-tab active" data-guide="web">Cách flash qua Web</button>
     </div>
     <div class="guide-panel active" id="guide-web">
       <ol>
         <li>Cắm board ESP32 vào máy tính bằng cáp USB (loại có truyền data, không phải cáp sạc).</li>
         <li>Mở trang này bằng <b>Google Chrome</b> hoặc <b>Microsoft Edge</b> trên máy tính.</li>
-        <li>Bấm nút <b>⚡ Flash qua USB</b> trên firmware muốn cài, chọn đúng cổng COM khi trình duyệt hỏi.</li>
+        <li>Bấm nút <b>Flash qua USB</b> trên firmware muốn cài, chọn đúng cổng COM khi trình duyệt hỏi.</li>
         <li>Đợi quá trình xoá và ghi firmware chạy xong — không rút cáp trong lúc này.</li>
       </ol>
     </div>
@@ -900,8 +923,8 @@
       <span id="mf-status-text">Chưa kết nối</span>
     </div>
     <div class="mf-toolbar">
-      <button id="mf-connect" class="btn btn-primary">🔌 Kết nối thiết bị</button>
-      <button id="mf-disconnect" class="btn btn-ghost" style="display:none">⏏ Ngắt kết nối</button>
+      <button id="mf-connect" class="btn btn-primary">Kết nối thiết bị</button>
+      <button id="mf-disconnect" class="btn btn-ghost" style="display:none">Ngắt kết nối</button>
       <span id="mf-chip-badge" class="badge" style="display:none"></span>
       <label class="mf-checkbox mf-baud-inline">
         Baud
@@ -926,7 +949,7 @@
     <button id="mf-add-file" class="btn btn-ghost" type="button">+ Thêm file ở địa chỉ khác</button>
 
     <details class="mf-advanced">
-      <summary>⚙ Tuỳ chọn nâng cao</summary>
+      <summary>Tuỳ chọn nâng cao</summary>
       <div class="mf-adv-grid">
         <label>Flash mode
           <select id="mf-mode">
@@ -964,8 +987,8 @@
     </details>
 
     <div class="mf-actions">
-      <button id="mf-flash" class="btn btn-flash" disabled>⚡ Bắt đầu Flash</button>
-      <button id="mf-erase-only" class="btn btn-secondary" disabled>🧹 Erase Flash</button>
+      <button id="mf-flash" class="btn btn-flash" disabled>Bắt đầu Flash</button>
+      <button id="mf-erase-only" class="btn btn-secondary" disabled>Erase Flash</button>
       <div class="mf-progress" id="mf-progress" style="display:none">
         <div class="mf-progress-track"><div class="mf-progress-bar" id="mf-progress-bar"></div></div>
         <span id="mf-progress-label" class="mono">0%</span>
@@ -995,8 +1018,8 @@
       </div>
 
       <div class="serial-toolbar">
-        <button id="sm-connect" class="btn btn-primary">🔌 Kết nối Serial</button>
-        <button id="sm-disconnect" class="btn btn-ghost" style="display:none">⏏ Ngắt kết nối</button>
+        <button id="sm-connect" class="btn btn-primary">Kết nối Serial</button>
+        <button id="sm-disconnect" class="btn btn-ghost" style="display:none">Ngắt kết nối</button>
         <span id="sm-status" class="badge">DISCONNECTED</span>
 
         <label class="serial-baud">
@@ -1026,7 +1049,7 @@
 
       <div class="serial-send">
         <input id="sm-input" type="text" placeholder="Gửi dữ liệu xuống ESP32...">
-        <button id="sm-send" class="btn btn-secondary" disabled>➤ Gửi</button>
+        <button id="sm-send" class="btn btn-secondary" disabled>Gửi</button>
       </div>
     </div>
   </section>
@@ -1084,9 +1107,9 @@ const canFlashInBrowser = 'serial' in navigator && window.isSecureContext;
 (function renderCompatBanner(){
   const el = document.getElementById('compat-banner');
   if(canFlashInBrowser){
-    el.innerHTML = `<div class="compat-banner ok"><span class="ic">✓</span><div><b>Trình duyệt này hỗ trợ flash trực tiếp.</b> Cắm board qua USB và bấm "⚡ Flash qua USB" trên firmware bạn muốn cài — không cần cài thêm phần mềm nào.</div></div>`;
+    el.innerHTML = `<div class="compat-banner ok"><span class="ic">✓</span><div><b>Trình duyệt này hỗ trợ flash trực tiếp.</b> Cắm board qua USB và bấm "Flash qua USB" trên firmware bạn muốn cài — không cần cài thêm phần mềm nào.</div></div>`;
   }else{
-    el.innerHTML = `<div class="compat-banner warn"><span class="ic">⚠</span><div><b>Trình duyệt hoặc thiết bị này chưa hỗ trợ flash qua web.</b> Tính năng dùng chuẩn Web Serial, hiện chỉ chạy trên <b>Chrome</b> hoặc <b>Edge trên máy tính</b> (không hỗ trợ Firefox, Safari, hoặc điện thoại). Bạn vẫn có thể bấm "⬇ Tải firmware" và nạp bằng esptool hoặc công cụ flash khác.</div></div>`;
+    el.innerHTML = `<div class="compat-banner warn"><span class="ic">⚠</span><div><b>Trình duyệt hoặc thiết bị này chưa hỗ trợ flash qua web.</b> Tính năng dùng chuẩn Web Serial, hiện chỉ chạy trên <b>Chrome</b> hoặc <b>Edge trên máy tính</b> (không hỗ trợ Firefox, Safari, hoặc điện thoại). Bạn vẫn có thể bấm "Tải firmware" và nạp bằng esptool hoặc công cụ flash khác.</div></div>`;
   }
 })();
 
@@ -1217,7 +1240,7 @@ function render(){
       <div class="card-top">
         <h3 class="card-name">${esc(it.name)}</h3>
         <div class="card-badges">
-          ${canFlashInBrowser ? '<span class="badge-flashable">⚡ Flash Web</span>' : ''}
+          ${canFlashInBrowser ? '<span class="badge-flashable">Flash Web</span>' : ''}
           <span class="badge">${esc(it.board || 'ESP32-S3')}</span>
           ${it.author ? `<span class="author-badge"><span class="at">@</span><span class="name">${esc(it.author)}</span></span>` : ''}
         </div>
@@ -1230,7 +1253,7 @@ function render(){
       </div>
       <div class="card-actions" data-idx="${idx}">
         ${canFlashInBrowser ? `<span class="flash-wrap" data-flash-slot="${idx}"></span>` : ''}
-        <a class="btn ${canFlashInBrowser ? 'btn-secondary' : 'btn-primary'}" href="firmware/${encodeURIComponent(it.file)}" download>⬇ Tải firmware</a>
+        <a class="btn ${canFlashInBrowser ? 'btn-secondary' : 'btn-primary'}" href="firmware/${encodeURIComponent(it.file)}" download>Tải firmware</a>
         <button class="btn btn-ghost btn-icon" data-link="firmware/${esc(it.file)}" title="Copy link tải trực tiếp">🔗</button>
         ${!canFlashInBrowser ? `<span class="flash-note">Flash qua web cần Chrome/Edge trên máy tính.</span>` : ''}
       </div>
@@ -1249,7 +1272,7 @@ function render(){
       const trigger = document.createElement('button');
       trigger.className = 'btn btn-flash';
       trigger.type = 'button';
-      trigger.innerHTML = '⚡ Flash qua USB';
+      trigger.innerHTML = 'Flash qua USB';
       trigger.setAttribute('slot', 'activate');
       installBtn.appendChild(trigger);
       slot.appendChild(installBtn);
@@ -1416,6 +1439,11 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       <input type="text" class="mf-addr-input mono" value="0x0" spellcheck="false">
       <button class="btn btn-ghost btn-icon mf-remove-row" type="button" title="Xoá dòng">✕</button>
     `;
+    // Ép animation chạy lại khi thêm dòng mới
+    row.style.animation = 'none';
+    row.offsetHeight; /* trigger reflow */
+    row.style.animation = '';
+    
     filesWrap.appendChild(row);
     wireFileRow(row);
     row.querySelector('.mf-remove-row').addEventListener('click', () => {
