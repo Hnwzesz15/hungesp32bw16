@@ -468,13 +468,13 @@
   .view-toggle button.active{background:rgba(61,220,132,.14); color:var(--trace);}
   .view-toggle button:hover{color:var(--trace);}
 
-  /* ---------- NÂNG CẤP FIRMWARE CARD (HIỆU ỨNG HOVER VIP) ---------- */
+  /* ---------- NÂNG CẤP FIRMWARE CARD (ULTRA VIP - KHÔNG CHE NỘI DUNG) ---------- */
   .grid{display:grid; gap:16px; grid-template-columns:1fr;}
   .grid.cols-2{grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));}
   @media (max-width:640px){ .grid.cols-2{grid-template-columns:1fr;} }
 
   .card{
-    position:relative; overflow:hidden;
+    position:relative; overflow:hidden; /* Cần overflow hidden để giữ hiệu ứng viền chạy */
     background:linear-gradient(180deg, var(--panel-2), var(--panel));
     border:1px solid rgba(61,220,132,.22);
     border-radius:var(--radius);
@@ -482,36 +482,48 @@
     opacity:0; transform:translateY(10px);
     animation:reveal .5s ease forwards;
     
-    /* Hiệu ứng nâng cấp: Bao gồm cả vị trí, bóng đổ sâu, và viền phát sáng Gradient */
+    /* Hiệu ứng nâng cấp */
     transition:all .4s var(--ease-smooth);
-    isolation:isolate;
   }
-  
-  /* Lớp viền Gradient chạy quanh card khi hover */
+
+  /* Viền Gradient chạy vòng quanh (Không đè lên nội dung) */
   .card::before{
-    content:""; position:absolute; inset:-2px; z-index:-1;
-    border-radius:calc(var(--radius) + 2px);
-    background:linear-gradient(135deg, var(--trace), transparent 40%, transparent 60%, var(--gold));
+    content:""; position:absolute; inset:-1px; z-index:0;
+    border-radius:var(--radius);
+    background:linear-gradient(135deg, var(--trace) 0%, transparent 40%, transparent 60%, var(--gold) 100%);
     opacity:0; 
     transition:opacity .4s var(--ease-smooth);
-    filter:blur(4px); /* Làm mờ viền sáng cho mềm */
+    pointer-events:none;
   }
-  .card:hover::before{opacity:1;}
+  
+  /* Lớp phủ nền mờ màu xanh nhẹ (Tăng độ sáng màu, không che chữ) */
+  .card::after{
+    content:""; position:absolute; inset:0; z-index:0;
+    background:radial-gradient(circle at 50% 100%, rgba(61,220,132,.06), transparent 70%);
+    opacity:0; transition:opacity .4s ease;
+    pointer-events:none;
+  }
 
   .card:hover{
-    border-color:rgba(61,220,132,.5); 
-    transform:translateY(-8px) scale(1.015); /* Nâng mạnh hơn */
-    box-shadow:0 20px 40px rgba(0,0,0,.5), 0 0 25px rgba(61,220,132,.15); /* Bóng đổ sâu + Phát sáng */
+    border-color:transparent; /* Viền trong suốt để lộ viền Gradient */
+    transform:translateY(-8px) scale(1.01); 
+    box-shadow:0 25px 50px rgba(0,0,0,.6), 0 0 30px rgba(61,220,132,.15);
   }
+  
+  /* Hiện viền Gradient và lớp phủ khi hover */
+  .card:hover::before{opacity:1;}
+  .card:hover::after{opacity:1;}
+
+  /* Nội dung bên trong phải nằm trên cùng (z-index cao hơn) */
+  .card > *{position:relative; z-index:1;}
 
   /* Các chấm pin (hole) phát sáng khi hover */
   .card .hole{
     position:absolute; width:6px; height:6px; border-radius:50%; border:1px solid var(--trace-dim); opacity:.6;
-    transition:all .4s var(--ease-smooth);
+    transition:all .4s var(--ease-smooth); z-index:2;
   }
   .card:hover .hole{
-    opacity:1; 
-    border-color:var(--gold); 
+    opacity:1; border-color:var(--gold); 
     box-shadow:0 0 8px var(--gold);
     transform:scale(1.3);
   }
@@ -519,21 +531,10 @@
   .card .hole.bl{bottom:8px; left:8px;} .card .hole.br{bottom:8px; right:8px;}
 
   @keyframes reveal{to{opacity:1; transform:translateY(0);}}
-  .card::after{
-    content:""; position:absolute; top:14px; bottom:14px; width:10px;
-    background-image:repeating-linear-gradient(to bottom, var(--gold) 0 4px, transparent 4px 11px);
-    opacity:.55; transition:opacity .3s ease, box-shadow .3s ease;
-  }
-  .card::after{right:-5px;}
-  .card:hover::after{opacity:.9; box-shadow:0 0 10px rgba(212,175,55,.4);} /* Sáng hơn + Phát sáng nhẹ */
-
-  /* Nội dung bên trong thẻ nhô lên khi hover */
-  .card > *{transition:transform .4s var(--ease-smooth);}
-  .card:hover > *{transform:translateY(-2px);}
 
   .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
-  .card-name{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:18px; margin:0; transition:color .3s ease;}
-  .card:hover .card-name{color:var(--trace); text-shadow:0 0 8px rgba(61,220,132,.3);}
+  .card-name{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:18px; margin:0; transition:color .3s ease, letter-spacing .3s ease;}
+  .card:hover .card-name{color:var(--trace); letter-spacing:.02em; text-shadow:0 0 10px rgba(61,220,132,.3);}
   .card-badges{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
   .badge{
     font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.06em;
