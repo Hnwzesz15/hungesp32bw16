@@ -292,20 +292,11 @@
   .mf-console .ln-err{color:var(--danger);}
   .mf-console .ln-ok{color:var(--trace);}
 
-   /* ---------- top nav (splits site into Info / Firmware) ---------- */
+  /* ---------- top nav (splits site into Info / Firmware) ---------- */
   .top-nav{
     display:flex; gap:4px; align-items:center;
-    position:sticky; /* Quan trọng: Giữ thanh này dính trên cùng */
-    top:0; /* Khoảng cách dính từ đỉnh màn hình */
-    z-index:100; /* Đảm bảo nó luôn nằm trên nội dung khi cuộn */
-    
-    padding:16px 0; margin-bottom:4px;
+    padding:16px 0; margin-bottom:4px; position:relative; z-index:2;
     border-bottom:1px dashed rgba(61,220,132,.18);
-    
-    /* Thêm hiệu ứng kính mờ (Glassmorphism) và nền tối để chữ không bị đè lên nội dung */
-    background: rgba(10, 21, 15, .85); 
-    backdrop-filter: blur(12px); 
-    -webkit-backdrop-filter: blur(12px);
   }
   .nav-link{
     background:transparent; border:none; cursor:pointer;
@@ -844,6 +835,39 @@
     .serial-console{min-height:300px;}
   }
 
+  /* ---------- FPS OVERLAY ---------- */
+  #fps-counter {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    z-index: 9999;
+    background: rgba(10, 21, 15, 0.85);
+    border: 1px solid rgba(61, 220, 132, 0.3);
+    color: var(--trace);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(61, 220, 132, 0.1);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    pointer-events: none;
+    user-select: none;
+    letter-spacing: .05em;
+    line-height: 1;
+  }
+  #fps-counter.warn {
+    color: var(--gold);
+    border-color: rgba(212, 175, 55, 0.4);
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.15);
+  }
+  #fps-counter.bad {
+    color: var(--danger);
+    border-color: rgba(226, 114, 91, 0.4);
+    box-shadow: 0 0 10px rgba(226, 114, 91, 0.15);
+  }
+
 </style>
 </head>
 <body>
@@ -1172,6 +1196,9 @@
     </div>
   </div>
 </div>
+
+<!-- FPS COUNTER -->
+<div id="fps-counter">FPS: 60</div>
 
 <script>
 document.getElementById('year').textContent = new Date().getFullYear();
@@ -1926,6 +1953,38 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       if(typeof toast === 'function') toast('⚠ Serial Monitor mất kết nối');
     }
   });
+})();
+
+// ------- FPS OVERLAY SCRIPT -------
+(function() {
+  const fpsElement = document.getElementById('fps-counter');
+  let frameCount = 0;
+  let lastTime = performance.now();
+
+  function updateFPS() {
+    frameCount++;
+    const now = performance.now();
+    const delta = now - lastTime;
+
+    if (delta >= 500) { 
+      const fps = Math.round((frameCount * 1000) / delta);
+      
+      fpsElement.classList.remove('warn', 'bad');
+      if (fps < 30) {
+        fpsElement.classList.add('bad');
+      } else if (fps < 55) {
+        fpsElement.classList.add('warn');
+      }
+      
+      fpsElement.textContent = `FPS: ${fps}`;
+      
+      frameCount = 0;
+      lastTime = now;
+    }
+    requestAnimationFrame(updateFPS);
+  }
+
+  requestAnimationFrame(updateFPS);
 })();
 
 </script>
