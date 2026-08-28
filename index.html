@@ -186,8 +186,44 @@
     content:""; position:absolute; left:14px; right:14px; bottom:0; height:2px;
     background:var(--trace); box-shadow:0 0 8px rgba(61,220,132,.5);
   }
-  .page-view{display:none;}
-  .page-view.active{display:block; animation:reveal .35s ease;}
+  
+  /* ---------- HIỆU ỨNG CHUYỂN TRANG SIÊU VIP PRO ---------- */
+  .page-view{
+    display:none;
+    opacity:0;
+    transform:translateY(20px) scale(0.96);
+    filter:blur(8px);
+    transition:opacity .45s cubic-bezier(0.19, 1, 0.22, 1), transform .45s cubic-bezier(0.19, 1, 0.22, 1), filter .45s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+  .page-view.active{
+    display:block;
+    opacity:1;
+    transform:translateY(0) scale(1);
+    filter:blur(0);
+    animation:viewReveal .6s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+  @keyframes viewReveal{
+    0%{opacity:0; transform:translateY(25px) scale(0.94); filter:blur(10px);}
+    100%{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
+  }
+  
+  /* Hiệu ứng chữ chạy cho tiêu đề mục */
+  .section-eyebrow{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); margin:40px 0 0; position:relative; overflow:hidden; white-space:nowrap;
+  }
+  .section-eyebrow::after{
+    content:""; position:absolute; left:0; top:50%; width:100%; height:1px;
+    background:linear-gradient(90deg, var(--trace-dim), transparent);
+    transform:translateX(100%);
+    animation:eyebrowScan 3s linear infinite;
+    opacity:.5;
+  }
+  @keyframes eyebrowScan{
+    0%{transform:translateX(100%);}
+    100%{transform:translateX(-100%);}
+  }
+  .section-eyebrow b{color:var(--trace);}
 
   /* ---------- header / hero ---------- */
   header{padding:56px 0 44px; border-bottom:1px dashed rgba(61,220,132,.25); position:relative; overflow:hidden;}
@@ -297,11 +333,6 @@
   .guide-panel li code{color:var(--trace);}
 
   /* ---------- controls ---------- */
-  .section-eyebrow{
-    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
-    color:var(--muted); margin:40px 0 0;
-  }
-  .section-eyebrow b{color:var(--trace);}
   .controls{
     display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:14px 0 22px;
     background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
