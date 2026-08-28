@@ -81,8 +81,13 @@
     padding:12px 14px; background:#0c1e14; border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
   }
   .mf-monitor-bar .btn.is-active{background:var(--trace); color:#062012; border-color:var(--trace);}
-  .mf-monitor-hint{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); line-height:1.5;}
   .mf-console .mon-tag{color:var(--trace);}
+
+  .mf-monitor-controls{display:flex; align-items:center; gap:4px;}
+  .mf-monitor-controls .btn-icon{padding:6px 8px; font-size:12px;}
+  .mf-monitor-controls .btn.is-active{background:rgba(61,220,132,.16); color:var(--trace); border-color:var(--trace);}
+  #mf-monitor-dot.paused{background:var(--gold); box-shadow:0 0 6px var(--gold); animation:none;}
+  #mf-monitor-dot.stopped{background:var(--muted); box-shadow:none; animation:none;}
 
   .mf-hint{color:var(--muted); font-size:12.5px; line-height:1.6; margin:0 0 14px;}
   .mf-hint code{color:var(--trace);}
@@ -693,7 +698,21 @@
           <option value="230400">230400</option>
         </select>
       </label>
-      <span class="mf-monitor-hint">Xem log lúc firmware (vd: Bruce) đang chạy — không cần bấm "Kết nối thiết bị" ở trên.</span>
+    </div>
+
+    <div class="mf-console-wrap" id="mf-monitor-panel" style="display:none">
+      <div class="mf-console-head">
+        <span class="label"><span class="dot" id="mf-monitor-dot"></span>SERIAL_MONITOR</span>
+        <div class="mf-monitor-controls">
+          <button id="mon-start" class="btn btn-ghost btn-icon" type="button" title="Start">▶</button>
+          <button id="mon-stop" class="btn btn-ghost btn-icon" type="button" title="Stop">⏹</button>
+          <button id="mon-pause" class="btn btn-ghost btn-icon" type="button" title="Pause">⏸</button>
+          <button id="mon-copy" class="btn btn-ghost btn-icon" type="button" title="Copy">📋</button>
+          <button id="mon-clear" class="btn btn-ghost btn-icon" type="button" title="Clear">🗑</button>
+          <button id="mon-reset" class="btn btn-ghost btn-icon" type="button" title="Reset board">⟲</button>
+        </div>
+      </div>
+      <pre class="mf-console" id="mf-monitor-console"></pre>
     </div>
 
     <p class="mf-hint">Chọn 1 hoặc nhiều file <code>.bin</code>, mỗi file ghi vào một địa chỉ (offset) riêng.</p>
@@ -1087,6 +1106,15 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
   const mfStatusText = $('mf-status-text');
   const monitorToggleBtn = $('mf-monitor-toggle');
   const monitorBaudSel = $('mf-monitor-baud');
+  const monitorPanel = $('mf-monitor-panel');
+  const monitorDot = $('mf-monitor-dot');
+  const monitorConsoleEl = $('mf-monitor-console');
+  const monStartBtn = $('mon-start');
+  const monStopBtn = $('mon-stop');
+  const monPauseBtn = $('mon-pause');
+  const monCopyBtn = $('mon-copy');
+  const monClearBtn = $('mon-clear');
+  const monResetBtn = $('mon-reset');
 
   let esploaderMod = null;   // cached dynamic import of esptool-js
   let transport = null;
@@ -1096,7 +1124,9 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
 
   let monitorPort = null;
   let monitorReader = null;
-  let monitorReading = false;
+  let monitorOpen = false;     // true once the serial port itself is open
+  let monitorReading = false;  // true while the read loop is actively pulling bytes
+  let monitorPaused = false;   // true while paused (loop still runs, lines aren't rendered)
   let monitorBuffer = '';
 
   // Web Serial fires this on navigator.serial whenever ANY paired device disappears
@@ -1110,11 +1140,12 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       setDisconnectedUI();
     }
     if(monitorPort && event.target === monitorPort){
-      log('Serial Monitor: thiết bị đã bị rút.', 'ln-err');
+      logMonitorLine('— thiết bị đã bị rút, Serial Monitor dừng lại —');
       toast('⚠ Serial Monitor mất kết nối');
-      monitorReading = false; monitorReader = null; monitorPort = null;
+      monitorReading = false; monitorOpen = false; monitorReader = null; monitorPort = null;
+      setMonitorDot('stopped');
       monitorToggleBtn.textContent = '📟 Mở Serial Monitor';
-      monitorToggleBtn.classList.remove('is-active');
+      monitorToggleBtn.disabled = false;
       if(!connected){ mfLed.classList.remove('on'); mfStatusText.textContent = 'Chưa kết nối'; mfPanel.classList.remove('is-connected'); }
     }
   });
@@ -1144,14 +1175,15 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     const ts = document.createElement('span');
     ts.className = 'ts';
     ts.textContent = `[${timestamp()}] `;
-    const tag = document.createElement('span');
-    tag.className = 'tag mon-tag';
-    tag.textContent = '[MON] ';
     line.appendChild(ts);
-    line.appendChild(tag);
     line.appendChild(document.createTextNode(text));
-    consoleEl.appendChild(line);
-    consoleEl.scrollTop = consoleEl.scrollHeight;
+    monitorConsoleEl.appendChild(line);
+    monitorConsoleEl.scrollTop = monitorConsoleEl.scrollHeight;
+  }
+  function setMonitorDot(state){
+    monitorDot.classList.remove('paused', 'stopped');
+    if(state === 'paused') monitorDot.classList.add('paused');
+    else if(state === 'stopped') monitorDot.classList.add('stopped');
   }
   log('Sẵn sàng. Bấm "Kết nối thiết bị" để bắt đầu...');
   const terminal = {
@@ -1288,7 +1320,11 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
   // ---- Serial Monitor: plain Web Serial read loop, independent from esptool-js ----
   // (esptool-js's Transport claims its own exclusive reader on the port while flashing,
   // so the monitor uses a separate port/connection rather than sharing one.)
-  async function readMonitorLoop(){
+  async function startReadLoop(){
+    if(monitorReading || !monitorPort) return;
+    monitorReading = true;
+    monitorPaused = false;
+    setMonitorDot('running');
     const decoder = new TextDecoder();
     const reader = monitorPort.readable.getReader();
     monitorReader = reader;
@@ -1296,7 +1332,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       while(monitorReading){
         const { value, done } = await reader.read();
         if(done) break;
-        if(value){
+        if(value && !monitorPaused){
           monitorBuffer += decoder.decode(value, { stream: true });
           const lines = monitorBuffer.split('\n');
           monitorBuffer = lines.pop();
@@ -1304,25 +1340,27 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
         }
       }
     }catch(err){
-      if(monitorReading) log('Serial Monitor bị ngắt: ' + (err && err.message ? err.message : err), 'ln-err');
+      if(monitorReading) logMonitorLine('— lỗi đọc dữ liệu: ' + (err && err.message ? err.message : err) + ' —');
     }finally{
       try{ reader.releaseLock(); }catch(e){}
+      monitorReading = false;
+      if(monitorOpen) setMonitorDot('stopped');
     }
   }
 
-  async function stopMonitor(){
-    monitorReading = false;
+  async function closeMonitorPort(){
+    monitorReading = false; monitorOpen = false; monitorPaused = false;
     try{ await monitorReader?.cancel(); }catch(e){}
     try{ await monitorPort?.close(); }catch(e){}
     monitorPort = null; monitorReader = null; monitorBuffer = '';
+    monitorPanel.style.display = 'none';
     monitorToggleBtn.textContent = '📟 Mở Serial Monitor';
-    monitorToggleBtn.classList.remove('is-active');
+    monitorToggleBtn.disabled = false;
     if(!connected){ mfLed.classList.remove('on'); mfStatusText.textContent = 'Chưa kết nối'; mfPanel.classList.remove('is-connected'); }
-    log('Đã dừng Serial Monitor.');
   }
 
   monitorToggleBtn.addEventListener('click', async () => {
-    if(monitorReading){ await stopMonitor(); return; }
+    if(monitorOpen){ await closeMonitorPort(); return; }
     if(connected){ toast('Ngắt kết nối Flash trước khi mở Serial Monitor'); return; }
     try{
       monitorToggleBtn.disabled = true;
@@ -1331,29 +1369,62 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
         port = await navigator.serial.requestPort();
       }catch(pickErr){
         if(pickErr && pickErr.name === 'NotFoundError'){
-          log('> đã huỷ chọn cổng COM cho Serial Monitor.');
+          toast('Đã huỷ chọn cổng COM');
         }else{
-          log('> không thể mở hộp thoại chọn cổng: ' + (pickErr && pickErr.message ? pickErr.message : pickErr), 'ln-err');
           toast('Không mở được hộp thoại chọn cổng COM');
         }
         return;
       }
       await port.open({ baudRate: parseInt(monitorBaudSel.value, 10) });
       monitorPort = port;
-      monitorReading = true;
-      monitorToggleBtn.textContent = '⏹ Dừng Serial Monitor';
-      monitorToggleBtn.classList.add('is-active');
+      monitorOpen = true;
+      monitorPanel.style.display = '';
+      monitorConsoleEl.innerHTML = '';
+      logMonitorLine(`— đã mở ở ${monitorBaudSel.value} baud —`);
+      monitorToggleBtn.textContent = '🔌 Đóng Serial Monitor';
       mfLed.classList.add('on');
       mfStatusText.textContent = 'Serial Monitor · ' + monitorBaudSel.value + ' baud';
       mfPanel.classList.add('is-connected');
-      log('Đã mở Serial Monitor ở ' + monitorBaudSel.value + ' baud.', 'ln-ok');
-      readMonitorLoop();
+      startReadLoop();
     }catch(err){
-      log('> lỗi mở Serial Monitor: ' + (err && err.message ? err.message : err), 'ln-err');
-      toast('Không mở được Serial Monitor');
-      monitorPort = null; monitorReading = false;
+      toast('Không mở được Serial Monitor: ' + (err && err.message ? err.message : err));
+      monitorPort = null; monitorOpen = false;
     }finally{
       monitorToggleBtn.disabled = false;
+    }
+  });
+
+  monStartBtn.addEventListener('click', () => {
+    if(!monitorOpen){ toast('Chưa mở Serial Monitor'); return; }
+    monitorPaused = false;
+    if(!monitorReading) startReadLoop();
+    else setMonitorDot('running');
+  });
+  monStopBtn.addEventListener('click', async () => {
+    if(!monitorReading) return;
+    monitorReading = false;
+    try{ await monitorReader?.cancel(); }catch(e){}
+  });
+  monPauseBtn.addEventListener('click', () => {
+    if(!monitorOpen) return;
+    monitorPaused = !monitorPaused;
+    setMonitorDot(monitorPaused ? 'paused' : 'running');
+  });
+  monCopyBtn.addEventListener('click', async () => {
+    try{ await navigator.clipboard.writeText(monitorConsoleEl.innerText); toast('✓ Đã copy log'); }
+    catch(e){ toast('Không copy được — trình duyệt chặn clipboard'); }
+  });
+  monClearBtn.addEventListener('click', () => { monitorConsoleEl.innerHTML = ''; });
+  monResetBtn.addEventListener('click', async () => {
+    if(!monitorPort){ toast('Chưa mở Serial Monitor'); return; }
+    try{
+      // Classic ESP32 auto-reset pulse via DTR/RTS (same lines esptool.py toggles).
+      await monitorPort.setSignals({ dataTerminalReady: false, requestToSend: true });
+      await new Promise(r => setTimeout(r, 100));
+      await monitorPort.setSignals({ requestToSend: false });
+      logMonitorLine('— đã gửi tín hiệu reset board —');
+    }catch(err){
+      toast('Bo mạch/driver này không hỗ trợ reset qua tín hiệu DTR/RTS');
     }
   });
 
