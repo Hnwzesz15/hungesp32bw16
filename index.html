@@ -574,6 +574,9 @@
     background:repeating-linear-gradient(rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
   }
   .serial-console .ts{color:var(--muted); opacity:.75;}
+  .serial-console .tag{color:var(--gold);}
+  .serial-console .ln-err{color:var(--danger);}
+  .serial-console .ln-ok{color:var(--trace);}
 
   .serial-send{display:flex; gap:10px; margin-top:14px;}
   .serial-send input{
@@ -1493,13 +1496,19 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   }
 
-  function addLog(text){
+  // Hàm addLog được sửa để giống hệt Web Flasher (có tag [ESP] và màu lỗi)
+  function addLog(text, cls){
     const line = document.createElement('div');
+    if(cls) line.className = cls;
     const ts = document.createElement('span');
     ts.className = 'ts';
     ts.textContent = `[${timestamp()}] `;
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = '[ESP] ';
     line.appendChild(ts);
-    line.appendChild(document.createTextNode(text));
+    line.appendChild(tag);
+    line.appendChild(document.createTextNode(String(text).replace(/^>\s*/, '')));
     consoleEl.appendChild(line);
     consoleEl.scrollTop = consoleEl.scrollHeight;
   }
@@ -1545,7 +1554,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
         }
       }
     }catch(err){
-      if(reading) addLog(`[SERIAL ERROR] ${err.message || err}`);
+      if(reading) addLog(`[SERIAL ERROR] ${err.message || err}`, 'ln-err');
     }finally{
       try{ reader.releaseLock(); }catch(e){}
       reader = null;
@@ -1579,7 +1588,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       readLoop();
     }catch(err){
       if(err?.name === 'NotFoundError') addLog('— Đã huỷ chọn cổng COM —');
-      else addLog(`[ERROR] ${err?.message || err}`);
+      else addLog(`[ERROR] ${err?.message || err}`, 'ln-err');
       await closePort();
     }
   });
@@ -1626,7 +1635,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       addLog(`> ${text}`);
       inputEl.value = '';
     }catch(err){
-      addLog(`[SEND ERROR] ${err?.message || err}`);
+      addLog(`[SEND ERROR] ${err?.message || err}`, 'ln-err');
     }finally{
       try{ if(writer) writer.releaseLock(); }catch(e){}
     }
@@ -1642,7 +1651,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
 
   navigator.serial.addEventListener('disconnect', event => {
     if(port && event.target === port){
-      addLog('— Thiết bị đã bị rút, Serial Monitor dừng lại —');
+      addLog('Thiết bị đã bị rút, Serial Monitor dừng lại', 'ln-err');
       closePort();
       if(typeof toast === 'function') toast('⚠ Serial Monitor mất kết nối');
     }
