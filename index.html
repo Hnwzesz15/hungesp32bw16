@@ -292,11 +292,20 @@
   .mf-console .ln-err{color:var(--danger);}
   .mf-console .ln-ok{color:var(--trace);}
 
-  /* ---------- top nav (splits site into Info / Firmware) ---------- */
+   /* ---------- top nav (splits site into Info / Firmware) ---------- */
   .top-nav{
     display:flex; gap:4px; align-items:center;
-    padding:16px 0; margin-bottom:4px; position:relative; z-index:2;
+    position:sticky; /* Quan trọng: Giữ thanh này dính trên cùng */
+    top:0; /* Khoảng cách dính từ đỉnh màn hình */
+    z-index:100; /* Đảm bảo nó luôn nằm trên nội dung khi cuộn */
+    
+    padding:16px 0; margin-bottom:4px;
     border-bottom:1px dashed rgba(61,220,132,.18);
+    
+    /* Thêm hiệu ứng kính mờ (Glassmorphism) và nền tối để chữ không bị đè lên nội dung */
+    background: rgba(10, 21, 15, .85); 
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px);
   }
   .nav-link{
     background:transparent; border:none; cursor:pointer;
