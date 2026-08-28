@@ -1583,8 +1583,22 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
         flowControl: 'none'
       });
       consoleEl.innerHTML = '';
-      addLog(`— Serial Monitor đã kết nối ở ${baudSel.value} baud —`);
+      
+      // === TỰ ĐỘNG RESET BOARD SAU KHI KẾT NỐI ===
+      addLog('— Serial Monitor đã kết nối, đang tự động reset board... —');
       connectedUI();
+      
+      // Kích hoạt tín hiệu Reset (DTR/RTS) để board khởi động lại sạch sẽ
+      try {
+        await port.setSignals({dataTerminalReady:false, requestToSend:true});
+        await new Promise(r => setTimeout(r, 100));
+        await port.setSignals({requestToSend:false});
+        addLog('— Đã gửi tín hiệu Reset board —');
+      } catch(e) {
+        addLog('— Không thể tự động Reset, hãy bấm nút ⟲ nếu cần —', 'ln-err');
+      }
+
+      // Bắt đầu đọc dữ liệu từ board
       readLoop();
     }catch(err){
       if(err?.name === 'NotFoundError') addLog('— Đã huỷ chọn cổng COM —');
