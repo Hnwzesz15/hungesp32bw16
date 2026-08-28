@@ -1651,7 +1651,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
 
   navigator.serial.addEventListener('disconnect', event => {
     if(port && event.target === port){
-      addLog('Thiết bị đã bị rút, Serial Monitor dừng lại', 'ln-err');
+      addLog('Thiết bị đã bị rút hoặc mất kết nối.', 'ln-err');
       closePort();
       if(typeof toast === 'function') toast('⚠ Serial Monitor mất kết nối');
     }
