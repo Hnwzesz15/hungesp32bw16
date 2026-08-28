@@ -50,61 +50,25 @@
   /* ---------- manual flash panel ---------- */
   .mf-panel{
     margin-top:14px; background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
-    padding:20px 22px 22px; transition:border-color .3s ease, box-shadow .3s ease;
+    padding:20px 22px 22px;
   }
-  .mf-panel.is-connected{border-color:rgba(61,220,132,.4); box-shadow:0 0 30px rgba(61,220,132,.05);}
-
-  /* device status bar — reads like a real hardware programmer's front panel */
-  .mf-statusbar{
-    display:flex; align-items:center; gap:10px; margin-bottom:16px; padding-bottom:14px;
-    border-bottom:1px dashed rgba(61,220,132,.16);
-    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted);
-  }
-  .mf-led{
-    width:8px; height:8px; border-radius:50%; background:#ff0000;
-    box-shadow:0 0 8px rgba(255,0,0,.9), inset 0 0 2px rgba(0,0,0,.3); flex-shrink:0;
-    transition:background .4s ease, box-shadow .4s ease;
-    animation:mf-led-pulse-red 1.4s ease-in-out infinite;
-  }
-  .mf-led.on{
-    background:var(--trace); box-shadow:0 0 8px var(--trace), 0 0 2px var(--trace);
-    animation:mf-led-pulse-green 2s ease-in-out infinite;
-  }
-  @keyframes mf-led-pulse-red{0%,100%{opacity:1;}50%{opacity:.35;}}
-  @keyframes mf-led-pulse-green{0%,100%{opacity:1;}50%{opacity:.55;}}
-
   .mf-toolbar{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
   .mf-baud-inline{margin-left:auto; display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);}
   .mf-baud-inline select{padding:6px 22px 6px 8px; font-size:12px;}
-  .mf-monitor-bar{
-    display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;
-    padding:12px 14px; background:#0c1e14; border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
-  }
-  .mf-monitor-bar .btn.is-active{background:var(--trace); color:#062012; border-color:var(--trace);}
-  .mf-monitor-hint{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); line-height:1.5;}
-  .mf-console .mon-tag{color:var(--trace);}
-
   .mf-hint{color:var(--muted); font-size:12.5px; line-height:1.6; margin:0 0 14px;}
   .mf-hint code{color:var(--trace);}
-
-  #mf-chip-badge{transition:opacity .25s ease, transform .25s ease;}
-  #mf-chip-badge.pop{animation:mf-badge-pop .3s ease;}
-  @keyframes mf-badge-pop{from{opacity:0; transform:scale(.85);} to{opacity:1; transform:scale(1);}}
 
   .mf-files{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
   .mf-file-row{display:flex; gap:8px; align-items:center;}
   .mf-file-row input[type="file"]{
     flex:1; min-width:0; background:#081209; border:1px solid rgba(61,220,132,.25); color:var(--muted);
     font-family:'JetBrains Mono',monospace; font-size:12px; padding:8px 10px; border-radius:var(--radius);
-    transition:border-color .2s ease, box-shadow .2s ease;
   }
-  .mf-file-row.has-file input[type="file"]{border-color:rgba(61,220,132,.6); box-shadow:0 0 0 1px rgba(61,220,132,.12); color:var(--text);}
   .mf-file-row input[type="file"]::file-selector-button{
     background:var(--trace); color:#062012; border:none; border-radius:var(--radius);
     padding:6px 10px; margin-right:10px; font-family:'JetBrains Mono',monospace; font-size:11.5px;
-    font-weight:700; cursor:pointer; transition:background .15s ease;
+    font-weight:700; cursor:pointer;
   }
-  .mf-file-row input[type="file"]::file-selector-button:hover{background:#4be996;}
   .mf-addr-input{width:110px; flex:none; text-align:center;}
   .mf-remove-row{color:var(--danger); border-color:rgba(226,114,91,.4);}
   .mf-remove-row:hover{border-color:var(--danger); background:rgba(226,114,91,.1);}
@@ -112,9 +76,8 @@
   .mf-advanced{margin:14px 0 0; border:1px solid rgba(61,220,132,.16); border-radius:var(--radius); background:#0c1e14;}
   .mf-advanced summary{
     cursor:pointer; list-style:none; padding:12px 16px; font-family:'JetBrains Mono',monospace;
-    font-size:12.5px; color:var(--trace); user-select:none; transition:background .15s ease;
+    font-size:12.5px; color:var(--trace); user-select:none;
   }
-  .mf-advanced summary:hover{background:rgba(61,220,132,.05);}
   .mf-advanced summary::-webkit-details-marker{display:none;}
   .mf-adv-grid{
     display:grid; grid-template-columns:repeat(3,1fr); gap:14px; padding:4px 16px 16px;
@@ -126,21 +89,10 @@
   .mf-checkbox{flex-direction:row !important; align-items:center; gap:8px !important; grid-column:span 1;}
   .mf-checkbox input[type="checkbox"]{accent-color:var(--trace); width:15px; height:15px;}
 
-  .mf-panel .btn:active{transform:translateY(1px);}
-
   .mf-actions{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:16px;}
   .mf-progress{display:flex; align-items:center; gap:10px; flex:1; min-width:160px;}
   .mf-progress-track{flex:1; height:8px; background:#081209; border:1px solid rgba(61,220,132,.25); border-radius:var(--radius); overflow:hidden;}
-  .mf-progress-bar{
-    height:100%; width:0%; background:var(--trace); box-shadow:0 0 8px rgba(61,220,132,.5); transition:width .2s ease;
-    position:relative; overflow:hidden;
-  }
-  .mf-progress-bar.active::after{
-    content:""; position:absolute; inset:0;
-    background:repeating-linear-gradient(-45deg, rgba(6,32,18,.25) 0 6px, transparent 6px 12px);
-    animation:mf-stripe 1s linear infinite;
-  }
-  @keyframes mf-stripe{from{background-position:0 0;} to{background-position:34px 0;}}
+  .mf-progress-bar{height:100%; width:0%; background:var(--trace); box-shadow:0 0 8px rgba(61,220,132,.5); transition:width .2s ease;}
   #mf-progress-label{font-size:11.5px; color:var(--muted); min-width:38px; text-align:right;}
 
   .mf-console-wrap{margin-top:18px; border:1px solid rgba(61,220,132,.25); border-radius:var(--radius); overflow:hidden;}
@@ -151,25 +103,11 @@
   }
   .mf-console-head .label{display:inline-flex; align-items:center; gap:7px;}
   .mf-console-head .dot{width:6px; height:6px; border-radius:50%; background:var(--trace); box-shadow:0 0 6px var(--trace); animation:blink 1.6s infinite; flex-shrink:0;}
-  .mf-console-head .dot.busy{background:var(--gold); box-shadow:0 0 6px var(--gold); animation:blink .6s infinite;}
   .mf-console .ts{color:var(--muted); opacity:.75;}
   .mf-console .tag{color:var(--gold);}
   .mf-console{
     margin:0; background:#050c07; color:var(--trace-dim); font-family:'JetBrains Mono',monospace;
     font-size:12px; line-height:1.6; padding:14px; height:260px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;
-    position:relative;
-  }
-  .mf-console::before{
-    content:""; position:absolute; inset:0; pointer-events:none;
-    background:repeating-linear-gradient(rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
-  }
-  .mf-console > div{animation:mf-line-in .18s ease;}
-  @keyframes mf-line-in{from{opacity:0; transform:translateY(2px);} to{opacity:1; transform:translateY(0);}}
-  @media (prefers-reduced-motion: reduce){
-    .mf-led{animation:none;}
-    .mf-led.on{animation:none;}
-    .mf-progress-bar.active::after{animation:none;}
-    .mf-console > div{animation:none;}
   }
   .mf-console .ln-err{color:var(--danger);}
   .mf-console .ln-ok{color:var(--trace);}
@@ -423,19 +361,391 @@
   .empty button{margin-top:14px;}
 
   footer{
+    margin-top:60px; padding-top:24px; border-topontent:space-between; align-items:center; padding:8px 12px;
+    background:var(--panel-2); border-bottom:1px dashed rgba(61,220,132,.2);
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+  }
+  .mf-console-head .label{display:inline-flex; align-items:center; gap:7px;}
+  .mf-console-head .dot{width:6px; height:6px; border-radius:50%; background:var(--trace); box-shadow:0 0 12px var(--trace); animation:blink 1.6s infinite; flex-shrink:0;}
+  .mf-console .ts{color:var(--muted); opacity:.75;}
+  .mf-console .tag{color:var(--gold);}
+  .mf-console{
+    margin:0; background:#050c07; color:var(--trace-dim); font-family:'JetBrains Mono',monospace;
+    font-size:12px; line-height:1.6; padding:14px; height:260px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;
+    scrollbar-width:thin; scrollbar-color:var(--trace-dim) transparent;
+  }
+  .mf-console::-webkit-scrollbar{width:4px;}
+  .mf-console::-webkit-scrollbar-track{background:transparent;}
+  .mf-console::-webkit-scrollbar-thumb{background:var(--trace-dim); border-radius:4px;}
+  .mf-console .ln-err{color:var(--danger);}
+  .mf-console .ln-ok{color:var(--trace);}
+  .mf-console .ln-warn{color:var(--gold);}
+
+  /* ---------- top nav ---------- */
+  .top-nav{
+    display:flex; gap:4px; align-items:center;
+    padding:16px 0; margin-bottom:4px; position:relative; z-index:2;
+    border-bottom:1px dashed rgba(61,220,132,.18);
+  }
+  .nav-link{
+    background:transparent; border:none; cursor:pointer;
+    font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.03em;
+    color:var(--muted); padding:8px 14px; border-radius:var(--radius);
+    position:relative; transition:all .25s ease;
+  }
+  .nav-link:hover{color:var(--text); background:rgba(61,220,132,.05);}
+  .nav-link.active{color:var(--trace);}
+  .nav-link.active::after{
+    content:""; position:absolute; left:14px; right:14px; bottom:0; height:2px;
+    background:var(--trace); box-shadow:0 0 20px rgba(61,220,132,.5);
+    animation:navGlow 2s ease-in-out infinite;
+  }
+  @keyframes navGlow{
+    0%,100%{box-shadow:0 0 20px rgba(61,220,132,.3);}
+    50%{box-shadow:0 0 40px rgba(61,220,132,.6);}
+  }
+  .page-view{display:none; animation:fadeUp .45s cubic-bezier(.4,0,.2,1);}
+  .page-view.active{display:block;}
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(12px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  /* ---------- header / hero ---------- */
+  header{padding:56px 0 44px; border-bottom:1px dashed rgba(61,220,132,.25); position:relative; overflow:hidden;}
+  header::after{
+    content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, transparent, var(--trace), transparent);
+    opacity:.3; animation:headerLine 4s ease-in-out infinite;
+  }
+  @keyframes headerLine{
+    0%,100%{opacity:.2; transform:scaleX(.8);}
+    50%{opacity:.5; transform:scaleX(1);}
+  }
+  .hero-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:28px; align-items:center; position:relative; z-index:1;}
+  @media (max-width:760px){ .hero-grid{grid-template-columns:1fr;} .hero-visual{order:-1; max-width:220px; margin:0 auto;} }
+
+  .trace-deco{position:absolute; top:-30px; right:-60px; width:320px; height:320px; opacity:.25; pointer-events:none;}
+  .chip-mark{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em;
+    color:var(--trace); text-transform:uppercase;
+    padding:4px 10px; border:1px solid var(--trace-dim); border-radius:var(--radius);
+    background:rgba(61,220,132,.06); transition:all .35s ease;
+    animation:chipPulse 3s ease-in-out infinite;
+  }
+  @keyframes chipPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(61,220,132,.1);}
+    50%{box-shadow:0 0 30px rgba(61,220,132,.15), inset 0 0 30px rgba(61,220,132,.03);}
+  }
+  .chip-mark:hover{box-shadow:0 0 40px rgba(61,220,132,.25); transform:scale(1.02);}
+  .chip-mark .dot{width:6px;height:6px;border-radius:50%;background:var(--trace); box-shadow:0 0 12px var(--trace); animation:blink 1.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.2;}}
+
+  h1{
+    font-family:'JetBrains Mono',monospace; font-weight:800;
+    font-size:clamp(34px,5.4vw,52px); line-height:1.05;
+    margin:18px 0 10px; letter-spacing:-.01em; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  h1 .brand{display:inline-flex; position:relative;}
+  h1 .brand .hung{color:#ffffff;}
+  h1 span{color:var(--trace); text-shadow:0 0 40px rgba(61,220,132,.35);}
+  h1 .deco{font-size:1.15em; margin-left:-4px; display:inline-block; line-height:1; animation:decoSpin 8s linear infinite;}
+  @keyframes decoSpin{
+    0%{transform:rotate(0deg) scale(1);}
+    25%{transform:rotate(5deg) scale(1.08);}
+    75%{transform:rotate(-5deg) scale(.95);}
+    100%{transform:rotate(0deg) scale(1);}
+  }
+  .lead{color:var(--muted); font-size:16px; max-width:52ch; line-height:1.6; margin:0 0 22px; animation:leadFade 1s ease .3s both;}
+  @keyframes leadFade{
+    from{opacity:0;transform:translateY(8px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+  .boot-line{
+    font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--trace-dim);
+    white-space:pre; overflow:hidden; border-right:2px solid var(--trace);
+    width:0; animation:type 1.6s steps(38,end) forwards, caret .8s step-end infinite;
+  }
+  @keyframes type{to{width:38ch;}}
+  @keyframes caret{50%{border-color:transparent;}}
+  @media (prefers-reduced-motion: reduce){
+    .boot-line{width:38ch; animation:none;}
+    .chip-mark .dot{animation:none;}
+    .card{animation:none !important;}
+  }
+
+  /* LCD-style stat readout */
+  .readout{
+    display:inline-flex; margin-top:8px; border:1px solid rgba(61,220,132,.3); border-radius:var(--radius);
+    background:#081209; box-shadow:inset 0 0 40px rgba(61,220,132,.06); overflow:hidden; flex-wrap:wrap;
+    animation:readoutPulse 4s ease-in-out infinite;
+  }
+  @keyframes readoutPulse{
+    0%,100%{border-color:rgba(61,220,132,.3);}
+    50%{border-color:rgba(61,220,132,.5);}
+  }
+  .stat{font-family:'JetBrains Mono',monospace; position:relative; padding:10px 18px; transition:background .3s ease;}
+  .stat:hover{background:rgba(61,220,132,.04);}
+  .stat + .stat{border-left:1px dashed rgba(61,220,132,.2);}
+  .stat b{display:block; font-size:20px; color:var(--trace); transition:all .3s ease; line-height:1.2; font-variant-numeric:tabular-nums;}
+  .stat:hover b{text-shadow:0 0 30px rgba(61,220,132,.5); transform:scale(1.04);}
+  .stat span{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em;}
+
+  /* hero chip illustration */
+  .hero-visual{position:relative;}
+  .hero-visual svg{width:100%; height:auto; display:block; filter:drop-shadow(0 0 30px rgba(61,220,132,.1));}
+  .hero-visual .led{animation:blink 1.6s infinite;}
+  .hero-visual .pulse-dot{animation:pulseTrail 3s ease-in-out infinite;}
+  @keyframes pulseTrail{
+    0%,100%{opacity:.3;}
+    50%{opacity:1;}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .hero-visual .pulse-dot{display:none;}
+    .hero-visual .led{animation:none;}
+  }
+
+  /* ---------- feature strip ---------- */
+  .feature-strip{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:26px; position:relative; z-index:1;
+  }
+  @media (max-width:700px){ .feature-strip{grid-template-columns:1fr;} }
+  .feature{
+    background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
+    padding:16px 16px 18px; position:relative; transition:all .35s cubic-bezier(.4,0,.2,1);
+    cursor:default; overflow:hidden;
+  }
+  .feature::before{
+    content:''; position:absolute; inset:0; background:radial-gradient(ellipse at var(--mx,50%) var(--my,50%), rgba(61,220,132,.06) 0%, transparent 60%);
+    opacity:0; transition:opacity .4s ease; pointer-events:none;
+  }
+  .feature:hover::before{opacity:1;}
+  .feature:hover{
+    border-color:rgba(61,220,132,.5); transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,0,0,.3), var(--glow-trace);
+  }
+  .feature-ic{font-size:20px; display:inline-block; margin-bottom:8px; transition:transform .3s ease;}
+  .feature:hover .feature-ic{transform:scale(1.15) rotate(-5deg);}
+  .feature h4{
+    font-family:'JetBrains Mono',monospace; font-size:13px; margin:0 0 6px; color:var(--text);
+    letter-spacing:.02em;
+  }
+  .feature p{margin:0; color:var(--muted); font-size:12.5px; line-height:1.55;}
+  .feature code{color:var(--trace);}
+
+  /* ---------- compat banner ---------- */
+  .compat-banner{
+    display:flex; align-items:flex-start; gap:12px; margin-top:22px;
+    padding:14px 16px; border-radius:var(--radius); font-size:13px; line-height:1.55;
+    animation:slideIn .4s ease;
+  }
+  .compat-banner.ok{background:rgba(61,220,132,.07); border:1px solid rgba(61,220,132,.3); color:var(--trace);}
+  .compat-banner.warn{background:rgba(226,114,91,.08); border:1px solid rgba(226,114,91,.35); color:#f0a892;}
+  .compat-banner .ic{font-size:16px; line-height:1;}
+  .compat-banner b{color:var(--text);}
+  .compat-banner a{color:inherit; text-decoration:underline;}
+
+  /* ---------- how-to guide ---------- */
+  .guide{
+    margin:18px 0 0; background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
+    overflow:hidden; transition:border-color .3s ease;
+  }
+  .guide:hover{border-color:rgba(61,220,132,.3);}
+  .guide-tabs{display:flex; border-bottom:1px dashed rgba(61,220,132,.2);}
+  .guide-tab{
+    flex:1; background:transparent; border:none; cursor:pointer; padding:12px 14px;
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--muted); border-bottom:2px solid transparent; transition:all .3s ease;
+    position:relative;
+  }
+  .guide-tab:hover{color:var(--text); background:rgba(61,220,132,.03);}
+  .guide-tab.active{color:var(--trace); border-bottom-color:var(--trace); background:rgba(61,220,132,.06);}
+  .guide-tab.active::after{
+    content:''; position:absolute; bottom:-2px; left:50%; transform:translateX(-50%);
+    width:60%; height:2px; background:var(--trace); box-shadow:0 0 20px var(--trace);
+  }
+  .guide-panel{padding:16px 18px; display:none; animation:fadeUp .35s ease;}
+  .guide-panel.active{display:block;}
+  .guide-panel ol{margin:0; padding-left:20px; color:var(--muted); font-size:13.5px; line-height:1.8;}
+  .guide-panel li b{color:var(--text); font-weight:600;}
+  .guide-panel li code{color:var(--trace);}
+
+  /* ---------- controls ---------- */
+  .section-eyebrow{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); margin:40px 0 0; position:relative; display:inline-block;
+  }
+  .section-eyebrow::after{
+    content:''; position:absolute; left:0; bottom:-4px; width:40px; height:1px;
+    background:var(--trace); box-shadow:0 0 10px var(--trace);
+  }
+  .controls{
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:14px 0 22px;
+    background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
+    padding:12px; transition:border-color .3s ease, box-shadow .3s ease;
+  }
+  .controls:focus-within{border-color:var(--trace); box-shadow:var(--glow-trace);}
+  input[type="search"], select{
+    background:#081209; border:1px solid rgba(61,220,132,.25);
+    color:var(--text); font-family:'JetBrains Mono',monospace; font-size:13px;
+    padding:10px 12px; border-radius:var(--radius); outline:none;
+    transition:all .3s ease;
+  }
+  input[type="search"]{flex:1; min-width:200px;}
+  input[type="search"]::placeholder{color:var(--muted);}
+  input[type="search"]:focus, select:focus{border-color:var(--trace); box-shadow:var(--glow-trace);}
+  select{cursor:pointer; appearance:none; padding-right:26px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%233ddc84'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center;
+  }
+  .tab{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    background:transparent; border:1px solid rgba(61,220,132,.25); color:var(--muted);
+    padding:9px 12px; border-radius:var(--radius); cursor:pointer; transition:all .3s ease;
+  }
+  .tab:hover{border-color:var(--trace); color:var(--trace); transform:translateY(-1px);}
+  .tab.active{border-color:var(--trace); color:var(--trace); background:rgba(61,220,132,.08); box-shadow:0 0 20px rgba(61,220,132,.08);}
+  .view-toggle{display:flex; border:1px solid rgba(61,220,132,.25); border-radius:var(--radius); overflow:hidden;}
+  .view-toggle button{
+    background:transparent; border:none; color:var(--muted); padding:9px 11px; cursor:pointer;
+    font-family:'JetBrains Mono',monospace; font-size:13px; line-height:1;
+    transition:all .3s ease;
+  }
+  .view-toggle button:hover{color:var(--text); background:rgba(61,220,132,.05);}
+  .view-toggle button.active{background:rgba(61,220,132,.15); color:var(--trace);}
+
+  /* ---------- firmware cards ---------- */
+  .grid{display:grid; gap:16px; grid-template-columns:1fr;}
+  .grid.cols-2{grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));}
+  @media (max-width:640px){ .grid.cols-2{grid-template-columns:1fr;} }
+
+  .card{
+    position:relative; overflow:hidden;
+    background:linear-gradient(165deg, var(--panel-2), var(--panel));
+    border:1px solid rgba(61,220,132,.22);
+    border-radius:var(--radius);
+    padding:20px 22px 18px;
+    opacity:0; transform:translateY(12px) scale(.98);
+    animation:cardReveal .5s cubic-bezier(.4,0,.2,1) forwards;
+    transition:all .4s cubic-bezier(.4,0,.2,1);
+    cursor:default;
+  }
+  .card:hover{
+    border-color:rgba(61,220,132,.5); transform:translateY(-3px) scale(1.005);
+    box-shadow:0 20px 50px rgba(0,0,0,.4), 0 0 0 1px rgba(61,220,132,.1), var(--glow-trace);
+  }
+  @keyframes cardReveal{
+    to{opacity:1; transform:translateY(0) scale(1);}
+  }
+  .card::before, .card::after{
+    content:""; position:absolute; top:14px; bottom:14px; width:10px;
+    background-image:repeating-linear-gradient(to bottom, var(--gold) 0 4px, transparent 4px 11px);
+    opacity:.45; transition:all .4s ease;
+  }
+  .card:hover::before, .card:hover::after{opacity:.85;}
+  .card::before{left:-5px;} .card::after{right:-5px;}
+  .card .hole{position:absolute; width:6px; height:6px; border-radius:50%; border:1px solid var(--trace-dim); opacity:.5; transition:all .3s ease;}
+  .card:hover .hole{border-color:var(--trace); box-shadow:0 0 10px rgba(61,220,132,.2);}
+  .card .hole.tl{top:8px; left:8px;} .card .hole.tr{top:8px; right:8px;}
+  .card .hole.bl{bottom:8px; left:8px;} .card .hole.br{bottom:8px; right:8px;}
+
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
+  .card-name{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:18px; margin:0; transition:color .3s ease;}
+  .card:hover .card-name{color:var(--trace);}
+  .card-badges{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
+  .badge{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.06em;
+    color:var(--gold); border:1px solid rgba(212,175,55,.4); padding:2px 8px; border-radius:var(--radius);
+    text-transform:uppercase; white-space:nowrap; transition:all .3s ease;
+  }
+  .card:hover .badge{border-color:var(--gold); box-shadow:0 0 15px rgba(212,175,55,.1);}
+  .badge-flashable{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.06em;
+    color:#062012; background:var(--trace); padding:2px 7px; border-radius:var(--radius);
+    text-transform:uppercase; white-space:nowrap; font-weight:700;
+    animation:flashBadgePulse 2s ease-in-out infinite;
+  }
+  @keyframes flashBadgePulse{
+    0%,100%{box-shadow:0 0 10px rgba(61,220,132,.3);}
+    50%{box-shadow:0 0 25px rgba(61,220,132,.6);}
+  }
+  .card-desc{color:var(--muted); font-size:13.5px; line-height:1.55; margin:10px 0 14px;}
+  .meta-row{
+    display:flex; gap:18px; flex-wrap:wrap;
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-bottom:16px;
+    align-items:center;
+  }
+  .meta-row b{color:var(--text); font-weight:500;}
+
+  /* --- Author badge --- */
+  .author-badge{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'JetBrains Mono',monospace; font-size:10.5px;
+    color:var(--gold); background:rgba(212,175,55,.08);
+    border:1px solid rgba(212,175,55,.25); padding:2px 8px;
+    border-radius:var(--radius); white-space:nowrap;
+    transition:all .3s ease;
+  }
+  .card:hover .author-badge{
+    border-color:var(--gold); background:rgba(212,175,55,.15);
+    box-shadow:0 0 20px rgba(212,175,55,.08);
+  }
+  .author-badge .at{color:var(--muted); opacity:.6;}
+  .author-badge .name{color:var(--gold);}
+
+  .card-actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .btn{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.03em;
+    padding:9px 14px; border-radius:var(--radius); text-decoration:none; cursor:pointer;
+    display:inline-flex; align-items:center; gap:7px; border:1px solid transparent; background:none;
+    transition:all .3s cubic-bezier(.4,0,.2,1);
+    position:relative;
+  }
+  .btn:disabled{opacity:.4; cursor:not-allowed;}
+  .btn-primary{background:var(--trace); color:#062012; font-weight:700;}
+  .btn-primary:hover{background:#4be996; transform:scale(1.03); box-shadow:0 0 30px rgba(61,220,132,.3);}
+  .btn-flash{background:var(--gold); color:#241c02; font-weight:700; border-color:var(--gold);}
+  .btn-flash:hover{background:#e7c257; transform:scale(1.03); box-shadow:0 0 30px rgba(212,175,55,.3);}
+  .btn-secondary{background:transparent; border-color:rgba(61,220,132,.5); color:var(--trace);}
+  .btn-secondary:hover{border-color:var(--trace); background:rgba(61,220,132,.1); transform:translateY(-2px); box-shadow:var(--glow-trace);}
+  .btn-ghost{background:transparent; border-color:rgba(61,220,132,.35); color:var(--trace);}
+  .btn-ghost:hover{border-color:var(--trace); background:rgba(61,220,132,.08); transform:translateY(-2px);}
+  .btn-icon{padding:9px 10px;}
+  .flash-wrap{position:relative; display:inline-flex;}
+  .flash-note{width:100%; margin-top:8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);}
+
+  .skeleton{
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border:1px solid rgba(61,220,132,.14); border-radius:var(--radius);
+    padding:20px 22px; height:150px; position:relative; overflow:hidden;
+  }
+  .skeleton::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(90deg, transparent, rgba(61,220,132,.08), transparent);
+    animation:shimmer 1.8s infinite;
+  }
+  @keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
+
+  .empty{
+    text-align:center; padding:60px 20px; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:13px;
+    border:1px dashed rgba(61,220,132,.25); border-radius:var(--radius);
+  }
+  .empty button{margin-top:14px;}
+
+  footer{
     margin-top:60px; padding-top:24px; border-top:1px dashed rgba(61,220,132,.25);
     display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
     font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);
   }
-  footer a{color:var(--trace); text-decoration:none;}
-  footer a:hover{text-decoration:underline;}
+  footer a{color:var(--trace); text-decoration:none; transition:all .3s ease;}
+  footer a:hover{text-decoration:underline; text-shadow:0 0 20px rgba(61,220,132,.3);}
 
   /* ---------- custom confirm modal ---------- */
   .confirm-overlay{
     position:fixed; inset:0; z-index:100; display:none;
     align-items:center; justify-content:center; padding:20px;
-    background:rgba(4,8,6,.82); backdrop-filter:blur(6px);
-    opacity:0; transition:opacity .18s ease;
+    background:rgba(4,8,6,.85); backdrop-filter:blur(8px);
+    opacity:0; transition:opacity .25s ease;
   }
   .confirm-overlay.show{display:flex;}
   .confirm-overlay.visible{opacity:1;}
@@ -449,15 +759,14 @@
     text-align:left;
     box-shadow:
       inset 0 1px 0 rgba(255,255,255,.03),
-      0 30px 70px rgba(0,0,0,.6),
+      0 40px 80px rgba(0,0,0,.7),
       0 1px 0 rgba(0,0,0,.4);
-    transform:translateY(6px) scale(.97); transition:transform .18s ease;
+    transform:translateY(8px) scale(.96); transition:all .25s cubic-bezier(.4,0,.2,1);
   }
   .confirm-overlay.visible .confirm-box{transform:translateY(0) scale(1);}
 
   .confirm-head{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
   .confirm-icwrap svg{width:19px; height:19px; display:block;}
-
   .confirm-box h3{
     font-family:'Inter',sans-serif; font-weight:700; font-size:17.5px;
     margin:0; color:var(--text); letter-spacing:-.01em;
@@ -465,7 +774,6 @@
   .confirm-box p{
     color:var(--muted); font-size:13.5px; line-height:1.65; margin:0 0 24px;
   }
-
   .confirm-actions{display:flex; gap:10px; justify-content:flex-end;}
   .confirm-actions .btn{padding:9px 17px;}
   .confirm-actions .btn-ghost{border-color:rgba(61,220,132,.3); color:var(--muted);}
@@ -473,18 +781,18 @@
   .confirm-actions .btn-flash{
     background:#b6604a; border-color:#b6604a; color:#f5ece8; font-weight:600;
   }
-  .confirm-actions .btn-flash:hover{background:#c67256;}
+  .confirm-actions .btn-flash:hover{background:#c67256; transform:scale(1.03); box-shadow:0 0 30px rgba(182,96,74,.3);}
 
   /* toasts */
   .toast-stack{position:fixed; bottom:20px; right:20px; z-index:50; display:flex; flex-direction:column; gap:8px;}
   .toast{
     font-family:'JetBrains Mono',monospace; font-size:12.5px;
     background:var(--panel-2); border:1px solid var(--trace-dim); color:var(--text);
-    padding:10px 14px; border-radius:var(--radius); box-shadow:0 6px 20px rgba(0,0,0,.4);
-    animation:toast-in .25s ease, toast-out .25s ease 1.8s forwards;
+    padding:10px 14px; border-radius:var(--radius); box-shadow:0 10px 40px rgba(0,0,0,.5), var(--glow-trace);
+    animation:toastIn .35s cubic-bezier(.4,0,.2,1), toastOut .35s ease 2s forwards;
   }
-  @keyframes toast-in{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
-  @keyframes toast-out{to{opacity:0; transform:translateY(8px);}}
+  @keyframes toastIn{from{opacity:0; transform:translateY(12px) scale(.95);} to{opacity:1; transform:translateY(0) scale(1);}}
+  @keyframes toastOut{to{opacity:0; transform:translateY(12px) scale(.95);}}
 
   /* back to top */
   #top-btn{
@@ -492,22 +800,52 @@
     width:38px; height:38px; border-radius:50%;
     background:var(--panel-2); border:1px solid var(--trace-dim); color:var(--trace);
     cursor:pointer; display:none; align-items:center; justify-content:center; font-size:16px;
+    transition:all .3s cubic-bezier(.4,0,.2,1);
   }
+  #top-btn:hover{background:var(--panel); border-color:var(--trace); box-shadow:var(--glow-trace); transform:scale(1.08);}
   #top-btn.show{display:flex;}
 
   ::selection{background:var(--trace); color:#062012;}
 
-  /* ---------- ultra-wide side rails (fill dead space beyond the content column) ---------- */
+  /* ---------- ultra-wide side rails ---------- */
   .side-rail{
     position:fixed; top:0; bottom:0; width:140px; z-index:0; pointer-events:none;
-    opacity:.35; display:none;
+    opacity:.3; display:none;
   }
   .side-rail.left{left:0;} .side-rail.right{right:0; transform:scaleX(-1);}
   @media (min-width:1600px){ .side-rail{display:block;} }
   @media (prefers-reduced-motion: reduce){ .side-rail .rail-pulse{display:none;} }
+
+  /* scrollable cards with stagger */
+  .card:nth-child(1){animation-delay:0ms;}
+  .card:nth-child(2){animation-delay:50ms;}
+  .card:nth-child(3){animation-delay:100ms;}
+  .card:nth-child(4){animation-delay:150ms;}
+  .card:nth-child(5){animation-delay:200ms;}
+  .card:nth-child(6){animation-delay:250ms;}
+  .card:nth-child(7){animation-delay:300ms;}
+  .card:nth-child(8){animation-delay:350ms;}
+  .card:nth-child(9){animation-delay:400ms;}
+  .card:nth-child(10){animation-delay:450ms;}
+
+  /* progress bar animated gradient */
+  .mf-progress-bar{
+    background:linear-gradient(90deg, var(--trace), #5eed9d, var(--trace));
+    background-size:200% 100%;
+    animation:progressGradient 1.5s ease infinite;
+  }
+  @keyframes progressGradient{
+    0%{background-position:0% 0%;}
+    100%{background-position:200% 0%;}
+  }
 </style>
 </head>
 <body>
+<!-- Floating orbs -->
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
 <svg class="side-rail left" viewBox="0 0 140 800" preserveAspectRatio="none" aria-hidden="true">
   <path d="M0 60 H60 V160 H30 V300 H70 V460 H20 V620 H60 V800" fill="none" stroke="#1c4d33" stroke-width="1.5"/>
   <circle cx="60" cy="60" r="3" fill="#3ddc84"/>
@@ -532,7 +870,7 @@
   <nav class="top-nav" aria-label="Điều hướng chính">
     <button class="nav-link active" data-view="info">Giới thiệu</button>
     <button class="nav-link" data-view="firmware">Firmware</button>
-    <button class="nav-link" data-view="manual">⚡ Web Flasher</button>
+    <button class="nav-link" data-view="manual">⚡ Tự Flash File .bin</button>
   </nav>
 
   <section id="view-info" class="page-view active">
@@ -659,14 +997,10 @@
 
   <section id="view-manual" class="page-view">
 
-  <p class="section-eyebrow">// WEB FLASHER — NÂNG CAO</p>
+  <p class="section-eyebrow">// TỰ FLASH FILE .BIN — NÂNG CAO</p>
   <div id="manual-compat-banner"></div>
 
-  <div class="mf-panel" id="mf-panel">
-    <div class="mf-statusbar">
-      <span class="mf-led" id="mf-led"></span>
-      <span id="mf-status-text">Chưa kết nối</span>
-    </div>
+  <div class="mf-panel">
     <div class="mf-toolbar">
       <button id="mf-connect" class="btn btn-primary">🔌 Kết nối thiết bị</button>
       <button id="mf-disconnect" class="btn btn-ghost" style="display:none">⏏ Ngắt kết nối</button>
@@ -680,20 +1014,6 @@
           <option value="921600">921600</option>
         </select>
       </label>
-    </div>
-
-    <div class="mf-monitor-bar">
-      <button id="mf-monitor-toggle" class="btn btn-secondary">📟 Mở Serial Monitor</button>
-      <label class="mf-checkbox mf-baud-inline">
-        Baud
-        <select id="mf-monitor-baud">
-          <option value="9600">9600</option>
-          <option value="74880">74880</option>
-          <option value="115200" selected>115200</option>
-          <option value="230400">230400</option>
-        </select>
-      </label>
-      <span class="mf-monitor-hint">Xem log lúc firmware (vd: Bruce) đang chạy — không cần bấm "Kết nối thiết bị" ở trên.</span>
     </div>
 
     <p class="mf-hint">Chọn 1 hoặc nhiều file <code>.bin</code>, mỗi file ghi vào một địa chỉ (offset) riêng.</p>
@@ -802,7 +1122,7 @@
 <script>
 document.getElementById('year').textContent = new Date().getFullYear();
 
-// ---- top nav: switch between "Giới thiệu" and "Firmware" views ----
+// ---- top nav ----
 document.querySelectorAll('.nav-link').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
@@ -824,7 +1144,7 @@ const canFlashInBrowser = 'serial' in navigator && window.isSecureContext;
   }
 })();
 
-// ---- guide tabs ---- (loops over all tabs incl. the CLI one, so no extra wiring needed per-tab)
+// ---- guide tabs ----
 document.querySelectorAll('.guide-tab').forEach(t => {
   t.addEventListener('click', () => {
     document.querySelectorAll('.guide-tab').forEach(x => x.classList.remove('active'));
@@ -851,10 +1171,10 @@ function toast(msg){
   el.className = 'toast';
   el.textContent = msg;
   toastStack.appendChild(el);
-  setTimeout(() => el.remove(), 2100);
+  setTimeout(() => el.remove(), 2200);
 }
 
-// ---- themed confirm modal (replaces native confirm()) ----
+// ---- themed confirm modal ----
 const confirmOverlay = document.getElementById('confirm-overlay');
 const confirmBoxTitle = document.getElementById('confirm-title');
 const confirmBoxMsg = document.getElementById('confirm-msg');
@@ -872,7 +1192,7 @@ function customConfirm(message, { title = 'Xác nhận', okLabel = 'OK' } = {}){
 }
 function closeConfirm(result){
   confirmOverlay.classList.remove('visible');
-  setTimeout(() => confirmOverlay.classList.remove('show'), 180);
+  setTimeout(() => confirmOverlay.classList.remove('show'), 200);
   if(confirmResolver){ confirmResolver(result); confirmResolver = null; }
 }
 confirmOkBtn.addEventListener('click', () => closeConfirm(true));
@@ -891,7 +1211,6 @@ function parseSizeMB(sizeStr){
   return num;
 }
 
-// Map board label -> chipFamily string expected by ESP Web Tools
 function chipFamily(board){
   const b = (board || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if(b.includes('S3')) return 'ESP32-S3';
@@ -902,7 +1221,6 @@ function chipFamily(board){
   return 'ESP32';
 }
 
-// Build a manifest blob URL on the fly so ESP Web Tools can flash this exact firmware file
 function buildManifestUrl(item){
   const fileUrl = new URL(`firmware/${item.file}`, window.location.href).href;
   const manifest = {
@@ -946,13 +1264,14 @@ function render(){
   }
 
   grid.innerHTML = items.map((it, idx) => `
-    <article class="card" style="animation-delay:${Math.min(idx,8) * 40}ms">
+    <article class="card" style="animation-delay:${Math.min(idx,10) * 45}ms">
       <span class="hole tl"></span><span class="hole tr"></span><span class="hole bl"></span><span class="hole br"></span>
       <div class="card-top">
         <h3 class="card-name">${esc(it.name)}</h3>
         <div class="card-badges">
           ${canFlashInBrowser ? '<span class="badge-flashable">⚡ Flash Web</span>' : ''}
           <span class="badge">${esc(it.board || 'ESP32-S3')}</span>
+          ${it.author ? `<span class="author-badge"><span class="at">@</span><span class="name">${esc(it.author)}</span></span>` : ''}
         </div>
       </div>
       <p class="card-desc">${esc(it.description || '')}</p>
@@ -960,7 +1279,6 @@ function render(){
         <span><b>v${esc(it.version || '—')}</b></span>
         <span>Ngày: <b>${esc(it.date || '—')}</b></span>
         <span>Dung lượng: <b>${esc(it.size || '—')}</b></span>
-        <span>Tác giả: <b>${esc(it.author || 'hungtesp')}</b></span>
       </div>
       <div class="card-actions" data-idx="${idx}">
         ${canFlashInBrowser ? `<span class="flash-wrap" data-flash-slot="${idx}"></span>` : ''}
@@ -971,9 +1289,6 @@ function render(){
     </article>
   `).join('');
 
-  // Mount the real esp-web-install-button elements after innerHTML is set
-  // (custom elements with dynamic manifest attrs are built here rather than
-  // as template strings, since the manifest is a per-item generated blob URL).
   if(canFlashInBrowser){
     items.forEach((it, idx) => {
       const slot = grid.querySelector(`[data-flash-slot="${idx}"]`);
@@ -1021,6 +1336,7 @@ function updateStats(){
   document.getElementById('stat-updated').textContent = dates.length ? dates[dates.length-1] : '—';
 }
 
+// Sample firmware data with author field
 fetch('firmware.json')
   .then(r => { if(!r.ok) throw new Error('http ' + r.status); return r.json(); })
   .then(data => {
@@ -1064,7 +1380,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     manualBanner.innerHTML = `<div class="compat-banner ok"><span class="ic">✓</span><div><b>Trình duyệt này hỗ trợ Web Serial.</b> Bạn có thể kết nối thẳng board và tự chọn file .bin để flash với đầy đủ tuỳ chọn nâng cao bên dưới.</div></div>`;
   }else{
     manualBanner.innerHTML = `<div class="compat-banner warn"><span class="ic">⚠</span><div><b>Trình duyệt hoặc thiết bị này chưa hỗ trợ Web Serial.</b> Dùng <b>Chrome</b> hoặc <b>Edge trên máy tính</b> để dùng được tab này.</div></div>`;
-    return; // don't wire up controls if unsupported
+    return;
   }
 
   const $ = (id) => document.getElementById(id);
@@ -1080,42 +1396,20 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
   const progressLabel = $('mf-progress-label');
   const consoleEl = $('mf-console');
   const consoleClearBtn = $('mf-console-clear');
-  const consoleDot = document.querySelector('.mf-console-head .dot');
   const baudSel = $('mf-baud');
-  const mfPanel = $('mf-panel');
-  const mfLed = $('mf-led');
-  const mfStatusText = $('mf-status-text');
-  const monitorToggleBtn = $('mf-monitor-toggle');
-  const monitorBaudSel = $('mf-monitor-baud');
 
-  let esploaderMod = null;   // cached dynamic import of esptool-js
+  let esploaderMod = null;
   let transport = null;
   let esploader = null;
   let connected = false;
-  let currentPort = null;    // tracked so we can detect physical unplug via navigator.serial 'disconnect'
+  let currentPort = null;
 
-  let monitorPort = null;
-  let monitorReader = null;
-  let monitorReading = false;
-  let monitorBuffer = '';
-
-  // Web Serial fires this on navigator.serial whenever ANY paired device disappears
-  // (cable pulled, board reset into a different mode, etc). Compare against the port
-  // we're actually using before resetting the UI, since other devices can also fire it.
   navigator.serial.addEventListener('disconnect', (event) => {
     if(currentPort && event.target === currentPort){
       log('Thiết bị đã bị rút hoặc mất kết nối.', 'ln-err');
       toast('⚠ Đã mất kết nối thiết bị');
       esploader = null; transport = null; currentPort = null;
       setDisconnectedUI();
-    }
-    if(monitorPort && event.target === monitorPort){
-      log('Serial Monitor: thiết bị đã bị rút.', 'ln-err');
-      toast('⚠ Serial Monitor mất kết nối');
-      monitorReading = false; monitorReader = null; monitorPort = null;
-      monitorToggleBtn.textContent = '📟 Mở Serial Monitor';
-      monitorToggleBtn.classList.remove('is-active');
-      if(!connected){ mfLed.classList.remove('on'); mfStatusText.textContent = 'Chưa kết nối'; mfPanel.classList.remove('is-connected'); }
     }
   });
 
@@ -1139,20 +1433,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     consoleEl.appendChild(line);
     consoleEl.scrollTop = consoleEl.scrollHeight;
   }
-  function logMonitorLine(text){
-    const line = document.createElement('div');
-    const ts = document.createElement('span');
-    ts.className = 'ts';
-    ts.textContent = `[${timestamp()}] `;
-    const tag = document.createElement('span');
-    tag.className = 'tag mon-tag';
-    tag.textContent = '[MON] ';
-    line.appendChild(ts);
-    line.appendChild(tag);
-    line.appendChild(document.createTextNode(text));
-    consoleEl.appendChild(line);
-    consoleEl.scrollTop = consoleEl.scrollHeight;
-  }
   log('Sẵn sàng. Bấm "Kết nối thiết bị" để bắt đầu...');
   const terminal = {
     clean(){ consoleEl.innerHTML = ''; },
@@ -1161,13 +1441,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
   };
 
   consoleClearBtn.addEventListener('click', () => { consoleEl.innerHTML = ''; log('Đã xoá log.'); });
-
-  function wireFileRow(row){
-    const fileInput = row.querySelector('.mf-file-input');
-    fileInput.addEventListener('change', () => {
-      row.classList.toggle('has-file', fileInput.files.length > 0);
-    });
-  }
 
   function addFileRow(){
     const row = document.createElement('div');
@@ -1179,13 +1452,11 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       <button class="btn btn-ghost btn-icon mf-remove-row" type="button" title="Xoá dòng">✕</button>
     `;
     filesWrap.appendChild(row);
-    wireFileRow(row);
     row.querySelector('.mf-remove-row').addEventListener('click', () => {
       if(filesWrap.children.length > 1) row.remove();
       else toast('Cần ít nhất 1 file');
     });
   }
-  filesWrap.querySelectorAll('.mf-file-row').forEach(wireFileRow);
   filesWrap.querySelectorAll('.mf-remove-row').forEach(b => {
     b.addEventListener('click', () => {
       if(filesWrap.children.length > 1) b.closest('.mf-file-row').remove();
@@ -1214,13 +1485,8 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     disconnectBtn.style.display = '';
     chipBadge.style.display = '';
     chipBadge.textContent = chipName || 'Đã kết nối';
-    chipBadge.classList.add('pop');
-    setTimeout(() => chipBadge.classList.remove('pop'), 300);
     flashBtn.disabled = false;
     eraseOnlyBtn.disabled = false;
-    mfLed.classList.add('on');
-    mfStatusText.textContent = 'Đã kết nối · ' + (chipName || '');
-    mfPanel.classList.add('is-connected');
   }
   function setDisconnectedUI(){
     connected = false;
@@ -1229,23 +1495,15 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     chipBadge.style.display = 'none';
     flashBtn.disabled = true;
     eraseOnlyBtn.disabled = true;
-    mfLed.classList.remove('on');
-    mfStatusText.textContent = 'Chưa kết nối';
-    mfPanel.classList.remove('is-connected');
   }
 
   connectBtn.addEventListener('click', async () => {
-    if(monitorReading){ toast('Dừng Serial Monitor trước khi kết nối Flash'); return; }
     try{
       connectBtn.disabled = true;
-      // IMPORTANT: requestPort() must fire immediately inside the click handler,
-      // before any other await — otherwise the browser no longer treats this as
-      // a user gesture and silently refuses to show the port picker.
       let port;
       try{
         port = await navigator.serial.requestPort();
       }catch(pickErr){
-        // User closed the picker, or no device was selected — not a real error.
         connectBtn.disabled = false;
         if(pickErr && pickErr.name === 'NotFoundError'){
           log('> đã huỷ chọn cổng COM.');
@@ -1285,85 +1543,12 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     log('> đã ngắt kết nối.');
   });
 
-  // ---- Serial Monitor: plain Web Serial read loop, independent from esptool-js ----
-  // (esptool-js's Transport claims its own exclusive reader on the port while flashing,
-  // so the monitor uses a separate port/connection rather than sharing one.)
-  async function readMonitorLoop(){
-    const decoder = new TextDecoder();
-    const reader = monitorPort.readable.getReader();
-    monitorReader = reader;
-    try{
-      while(monitorReading){
-        const { value, done } = await reader.read();
-        if(done) break;
-        if(value){
-          monitorBuffer += decoder.decode(value, { stream: true });
-          const lines = monitorBuffer.split('\n');
-          monitorBuffer = lines.pop();
-          lines.forEach(l => { const clean = l.replace(/\r$/, ''); if(clean) logMonitorLine(clean); });
-        }
-      }
-    }catch(err){
-      if(monitorReading) log('Serial Monitor bị ngắt: ' + (err && err.message ? err.message : err), 'ln-err');
-    }finally{
-      try{ reader.releaseLock(); }catch(e){}
-    }
-  }
-
-  async function stopMonitor(){
-    monitorReading = false;
-    try{ await monitorReader?.cancel(); }catch(e){}
-    try{ await monitorPort?.close(); }catch(e){}
-    monitorPort = null; monitorReader = null; monitorBuffer = '';
-    monitorToggleBtn.textContent = '📟 Mở Serial Monitor';
-    monitorToggleBtn.classList.remove('is-active');
-    if(!connected){ mfLed.classList.remove('on'); mfStatusText.textContent = 'Chưa kết nối'; mfPanel.classList.remove('is-connected'); }
-    log('Đã dừng Serial Monitor.');
-  }
-
-  monitorToggleBtn.addEventListener('click', async () => {
-    if(monitorReading){ await stopMonitor(); return; }
-    if(connected){ toast('Ngắt kết nối Flash trước khi mở Serial Monitor'); return; }
-    try{
-      monitorToggleBtn.disabled = true;
-      let port;
-      try{
-        port = await navigator.serial.requestPort();
-      }catch(pickErr){
-        if(pickErr && pickErr.name === 'NotFoundError'){
-          log('> đã huỷ chọn cổng COM cho Serial Monitor.');
-        }else{
-          log('> không thể mở hộp thoại chọn cổng: ' + (pickErr && pickErr.message ? pickErr.message : pickErr), 'ln-err');
-          toast('Không mở được hộp thoại chọn cổng COM');
-        }
-        return;
-      }
-      await port.open({ baudRate: parseInt(monitorBaudSel.value, 10) });
-      monitorPort = port;
-      monitorReading = true;
-      monitorToggleBtn.textContent = '⏹ Dừng Serial Monitor';
-      monitorToggleBtn.classList.add('is-active');
-      mfLed.classList.add('on');
-      mfStatusText.textContent = 'Serial Monitor · ' + monitorBaudSel.value + ' baud';
-      mfPanel.classList.add('is-connected');
-      log('Đã mở Serial Monitor ở ' + monitorBaudSel.value + ' baud.', 'ln-ok');
-      readMonitorLoop();
-    }catch(err){
-      log('> lỗi mở Serial Monitor: ' + (err && err.message ? err.message : err), 'ln-err');
-      toast('Không mở được Serial Monitor');
-      monitorPort = null; monitorReading = false;
-    }finally{
-      monitorToggleBtn.disabled = false;
-    }
-  });
-
   eraseOnlyBtn.addEventListener('click', async () => {
     if(!esploader) return;
     const ok = await customConfirm('Xoá toàn bộ flash trên board? Thao tác không thể hoàn tác.', { title: 'Erase Flash', okLabel: 'Erase' });
     if(!ok) return;
     try{
       eraseOnlyBtn.disabled = true;
-      consoleDot?.classList.add('busy');
       log('> đang xoá toàn bộ flash...');
       await esploader.eraseFlash();
       log('> xoá flash hoàn tất.', 'ln-ok');
@@ -1373,7 +1558,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       toast('Xoá flash thất bại');
     }finally{
       eraseOnlyBtn.disabled = false;
-      consoleDot?.classList.remove('busy');
     }
   });
 
@@ -1403,8 +1587,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     flashBtn.disabled = true; eraseOnlyBtn.disabled = true;
     progressWrap.style.display = 'flex';
     progressBar.style.width = '0%'; progressLabel.textContent = '0%';
-    progressBar.classList.add('active');
-    consoleDot?.classList.add('busy');
     log(`> bắt đầu flash ${fileArray.length} file...`);
 
     try{
@@ -1429,8 +1611,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       toast('Flash thất bại — xem console bên dưới');
     }finally{
       flashBtn.disabled = false; eraseOnlyBtn.disabled = false;
-      progressBar.classList.remove('active');
-      consoleDot?.classList.remove('busy');
     }
   });
 })();
