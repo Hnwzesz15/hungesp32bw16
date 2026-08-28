@@ -468,7 +468,7 @@
   .view-toggle button.active{background:rgba(61,220,132,.14); color:var(--trace);}
   .view-toggle button:hover{color:var(--trace);}
 
-  /* ---------- NÂNG CẤP FIRMWARE CARD (DẢI LED CƠ BẢN + ZOOM CHỮ) ---------- */
+  /* ---------- NÂNG CẤP FIRMWARE CARD (DẢI LED VIỀN NGOÀI + CHỮ ZOOM) ---------- */
   /* Định nghĩa góc quay cho dải LED */
   @property --angle {
     syntax: '<angle>';
@@ -493,11 +493,15 @@
     transition:all .4s var(--ease-smooth);
   }
 
-  /* Dải LED duy nhất chạy quanh viền ngoài */
+  /* Dải LED viền ngoài (Chỉ ở rìa, không đè vào bên trong) */
   .card::before{
-    content:""; position:absolute; inset:-2px; z-index:-1;
-    border-radius:calc(var(--radius) + 2px);
-    background:conic-gradient(from var(--angle), transparent 0%, transparent 70%, var(--trace) 85%, #ffffff 90%, var(--trace) 95%, transparent 100%);
+    content:""; position:absolute; inset:0; z-index:10; pointer-events:none;
+    border-radius:var(--radius);
+    padding:1.5px; /* Độ dày viền led */
+    background:conic-gradient(from var(--angle), transparent 0%, transparent 80%, var(--trace) 90%, #fff 92%, var(--gold) 95%, transparent 100%);
+    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
     opacity:0;
     transition:opacity .4s ease;
     animation:rotate-border 4s linear infinite;
@@ -537,8 +541,7 @@
     transition:transform .3s var(--ease-smooth), color .3s var(--ease-smooth);
   }
   .card:hover .card-name{
-    color:var(--trace); 
-    transform:scale(1.03); /* Zoom nhẹ lên */
+    color:var(--trace); transform:scale(1.04); /* Zoom nhẹ */
   }
   
   .card-badges{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
