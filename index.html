@@ -21,7 +21,6 @@
     --mask:#1c4d33; --trace:#3ddc84; --trace-dim:#2a9c61;
     --gold:#d4af37; --text:#e6f1ea; --muted:#7f9c8c;
     --danger:#e2725b; --radius:2px;
-    --favorite:#ff6b6b; --favorite-glow: rgba(255, 107, 107, 0.35);
     
     /* Hiệu ứng siêu VIP */
     --glow-trace: rgba(61, 220, 132, 0.35);
@@ -535,31 +534,6 @@
   .author-badge .at{color:var(--muted); opacity:.6;}
   .author-badge .name{color:var(--gold);}
 
-  /* --- Favorite button --- */
-  .favorite-btn{
-    background:transparent; border:1px solid rgba(255,107,107,.3); color:var(--muted);
-    width:36px; height:36px; border-radius:var(--radius); cursor:pointer;
-    display:inline-flex; align-items:center; justify-content:center;
-    font-size:18px; line-height:1;
-    transition:all .3s var(--ease-smooth);
-  }
-  .favorite-btn:hover{
-    border-color:var(--favorite); color:var(--favorite);
-    transform:translateY(-2px) scale(1.1);
-    box-shadow:0 4px 15px var(--favorite-glow);
-  }
-  .favorite-btn.active{
-    border-color:var(--favorite); color:var(--favorite);
-    background:rgba(255,107,107,.1);
-    box-shadow:0 0 15px var(--favorite-glow);
-    animation:favoritePulse .3s ease;
-  }
-  @keyframes favoritePulse{
-    0%{transform:scale(1);}
-    50%{transform:scale(1.3);}
-    100%{transform:scale(1);}
-  }
-
   .card-actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
   .btn{
     font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.03em;
@@ -923,9 +897,6 @@
       <option value="size">Dung lượng</option>
     </select>
     <button class="tab active" data-filter="all">Tất cả</button>
-    <button class="tab" data-filter="favorites" id="favorites-tab" style="border-color:rgba(255,107,107,.3); color:var(--favorite);">
-      ♥ Yêu thích
-    </button>
     <span id="board-tabs"></span>
     <div class="view-toggle" role="group" aria-label="Chế độ xem">
       <button id="view-grid" class="active" aria-label="Xem dạng lưới" title="Lưới">▦</button>
@@ -1120,26 +1091,6 @@
 <script>
 document.getElementById('year').textContent = new Date().getFullYear();
 
-// ---- Favorites management ----
-const FAVORITES_KEY = 'hungtesp_favorites';
-let favorites = new Set(JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]'));
-
-function saveFavorites(){
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favorites]));
-}
-
-function toggleFavorite(itemName){
-  if(favorites.has(itemName)){
-    favorites.delete(itemName);
-    toast('Đã bỏ yêu thích: ' + itemName);
-  }else{
-    favorites.add(itemName);
-    toast('♥ Đã thêm vào yêu thích: ' + itemName);
-  }
-  saveFavorites();
-  render();
-}
-
 // ---- top nav: switch between "Giới thiệu" and "Firmware" views ----
 document.querySelectorAll('.nav-link').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -1265,10 +1216,9 @@ function render(){
   const q = searchEl.value.trim().toLowerCase();
   let items = ALL.filter(it => {
     const matchesBoard = activeBoard === 'all' || it.board === activeBoard;
-    const matchesFavorites = activeBoard !== 'favorites' || favorites.has(it.name);
     const hay = `${it.name} ${it.board} ${it.description||''} ${it.version||''} ${it.author||''}`.toLowerCase();
     const matchesQuery = !q || hay.includes(q);
-    return matchesBoard && matchesFavorites && matchesQuery;
+    return matchesBoard && matchesQuery;
   });
   items = sortItems(items);
 
@@ -1302,11 +1252,6 @@ function render(){
         <span>Dung lượng: <b>${esc(it.size || '—')}</b></span>
       </div>
       <div class="card-actions" data-idx="${idx}">
-        <button class="favorite-btn ${favorites.has(it.name) ? 'active' : ''}" 
-                data-fav="${esc(it.name)}" 
-                title="${favorites.has(it.name) ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}">
-          ${favorites.has(it.name) ? '♥' : '♡'}
-        </button>
         ${canFlashInBrowser ? `<span class="flash-wrap" data-flash-slot="${idx}"></span>` : ''}
         <a class="btn ${canFlashInBrowser ? 'btn-secondary' : 'btn-primary'}" href="firmware/${encodeURIComponent(it.file)}" download>Tải firmware</a>
         <button class="btn btn-ghost btn-icon" data-link="firmware/${esc(it.file)}" title="Copy link tải trực tiếp">🔗</button>
@@ -1314,13 +1259,6 @@ function render(){
       </div>
     </article>
   `).join('');
-
-  // Mount favorite button listeners
-  grid.querySelectorAll('.favorite-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      toggleFavorite(btn.dataset.fav);
-    });
-  });
 
   // Mount the real esp-web-install-button elements after innerHTML is set
   // (custom elements with dynamic manifest attrs are built here rather than
@@ -1353,8 +1291,6 @@ function render(){
 function buildTabs(){
   const boards = [...new Set(ALL.map(i => i.board).filter(Boolean))];
   tabsEl.innerHTML = boards.map(b => `<button class="tab" data-filter="${esc(b)}">${esc(b)}</button>`).join('');
-  
-  // Add event listeners for all tabs including "all" and "favorites"
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
