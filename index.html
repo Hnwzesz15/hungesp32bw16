@@ -9,12 +9,7 @@
 <meta property="og:description" content="Firmware ESP32-S3 tự build — flash qua web bằng Chrome/Edge, hoặc tải về dùng esptool.">
 <meta property="og:type" content="website">
 <meta name="theme-color" content="#0a150f">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="hungtesp">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230f2317'/%3E%3Crect x='9' y='9' width='14' height='14' rx='1' fill='none' stroke='%233ddc84' stroke-width='2'/%3E%3Crect x='13' y='13' width='6' height='6' fill='%233ddc84'/%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230f2317'/%3E%3Crect x='9' y='9' width='14' height='14' rx='1' fill='none' stroke='%233ddc84' stroke-width='2'/%3E%3Crect x='13' y='13' width='6' height='6' fill='%233ddc84'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -26,6 +21,7 @@
     --mask:#1c4d33; --trace:#3ddc84; --trace-dim:#2a9c61;
     --gold:#d4af37; --text:#e6f1ea; --muted:#7f9c8c;
     --danger:#e2725b; --radius:2px;
+    --favorite:#ff6b6b; --favorite-glow: rgba(255, 107, 107, 0.35);
     
     /* Hiệu ứng siêu VIP */
     --glow-trace: rgba(61, 220, 132, 0.35);
@@ -99,15 +95,13 @@
   /* ---------- NÂNG CẤP GIAO DIỆN DÒNG FILE (HIỆU ỨNG THÊM MỚI) ---------- */
   .mf-files{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
   .mf-file-row{
-    display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    display:flex; gap:8px; align-items:center; 
     animation:fileRowIn .5s var(--ease-smooth); /* Hiệu ứng xuất hiện */
-    border:1px solid transparent; border-radius:var(--radius); padding:2px; transition:border-color .2s ease, background .2s ease;
   }
   @keyframes fileRowIn{
     0%{opacity:0; transform:translateY(-8px) scale(.97); filter:blur(4px);}
     100%{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
   }
-  .mf-file-row.drag-over{border-color:var(--trace); background:rgba(61,220,132,.08);}
 
   .mf-file-row input[type="file"]{
     flex:1; min-width:0; background:#081209; border:1px solid rgba(61,220,132,.25); color:var(--muted);
@@ -124,17 +118,6 @@
   .mf-addr-input{width:110px; flex:none; text-align:center;}
   .mf-remove-row{color:var(--danger); border-color:rgba(226,114,91,.4);}
   .mf-remove-row:hover{border-color:var(--danger); background:rgba(226,114,91,.1);}
-  .mf-file-hash{
-    flex-basis:100%; font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--muted);
-    padding-left:2px; display:none; align-items:center; gap:6px;
-  }
-  .mf-file-hash.show{display:flex;}
-  .mf-file-hash b{color:var(--trace); font-weight:500;}
-  .mf-file-hash button{
-    background:none; border:none; color:var(--muted); cursor:pointer; font-size:11px; padding:0 2px;
-    transition:color .15s ease;
-  }
-  .mf-file-hash button:hover{color:var(--trace);}
 
   /* ---------- NÂNG CẤP NÚT THÊM FILE ---------- */
   #mf-add-file{
@@ -149,11 +132,6 @@
     letter-spacing:.08em; 
   }
   #mf-add-file:active{transform:translateY(0) scale(.98);}
-
-  /* ---------- Board preset + flash profiles ---------- */
-  .mf-preset-row{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px;}
-  .mf-preset-row label{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); display:flex; align-items:center; gap:8px;}
-  .mf-profile-actions{margin-left:auto; display:flex; gap:8px; flex-wrap:wrap;}
 
   /* ---------- NÂNG CẤP MỤC TUỲ CHỌN NÂNG CAO (SMOOTH ACCORDION) ---------- */
   .mf-advanced{
@@ -223,7 +201,6 @@
   }
   
   .btn:active{transform:translateY(1px) scale(.97); box-shadow:0 0 2px rgba(0,0,0,.4);}
-  .btn:disabled{opacity:.4; cursor:not-allowed; transform:none !important; box-shadow:none !important;}
   
   .btn-primary{background:var(--trace); color:#062012; font-weight:700;}
   .btn-primary:hover{background:#4be996; transform:translateY(-2px); box-shadow:0 4px 15px var(--glow-trace);}
@@ -289,12 +266,10 @@
 
   /* ---------- top nav (splits site into Info / Firmware) ---------- */
   .top-nav{
-    display:flex; gap:4px; align-items:center; justify-content:space-between;
-    padding:16px 0; margin-bottom:4px; position:relative; z-index:20;
+    display:flex; gap:4px; align-items:center;
+    padding:16px 0; margin-bottom:4px; position:relative; z-index:2;
     border-bottom:1px dashed rgba(61,220,132,.18);
   }
-  .nav-links{display:flex; gap:4px; align-items:center; flex-wrap:wrap;}
-  .nav-tools{display:flex; align-items:center; gap:8px;}
   .nav-link{
     background:transparent; border:none; cursor:pointer;
     font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.03em;
@@ -306,34 +281,6 @@
   .nav-link.active::after{
     content:""; position:absolute; left:14px; right:14px; bottom:0; height:2px;
     background:var(--trace); box-shadow:0 0 8px rgba(61,220,132,.5);
-  }
-  .nav-kbd-hint{
-    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);
-    border:1px solid rgba(61,220,132,.3); border-radius:var(--radius); padding:5px 9px;
-    display:inline-flex; align-items:center; gap:5px; cursor:pointer; background:transparent;
-    transition:all .2s ease;
-  }
-  .nav-kbd-hint:hover{border-color:var(--trace); color:var(--trace); box-shadow:0 0 10px rgba(61,220,132,.15);}
-  .nav-kbd-hint kbd{
-    font-family:inherit; background:rgba(61,220,132,.1); border:1px solid rgba(61,220,132,.3);
-    border-radius:3px; padding:1px 5px; font-size:10px;
-  }
-  .nav-burger{
-    display:none; background:transparent; border:1px solid rgba(61,220,132,.3); color:var(--trace);
-    border-radius:var(--radius); width:36px; height:36px; cursor:pointer; font-size:16px;
-    align-items:center; justify-content:center;
-  }
-  @media (max-width:760px){
-    .nav-burger{display:inline-flex;}
-    .nav-links{
-      display:none; position:absolute; top:100%; left:0; right:0;
-      flex-direction:column; gap:2px; background:var(--panel-2); border:1px solid rgba(61,220,132,.2);
-      border-radius:var(--radius); padding:8px; box-shadow:0 12px 30px rgba(0,0,0,.5);
-    }
-    .nav-links.open{display:flex;}
-    .nav-link{width:100%; text-align:left;}
-    .nav-link.active::after{left:0; right:0; bottom:0; top:0; height:auto; background:rgba(61,220,132,.08); box-shadow:none; border-radius:var(--radius); z-index:-1;}
-    .nav-kbd-hint{display:none;}
   }
   
   /* ---------- HIỆU ỨNG CHUYỂN TRANG SIÊU VIP PRO ---------- */
@@ -354,9 +301,6 @@
   @keyframes viewReveal{
     0%{opacity:0; transform:translateY(25px) scale(0.94); filter:blur(10px);}
     100%{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
-  }
-  @media (prefers-reduced-motion: reduce){
-    .page-view{transition:opacity .2s ease;} .page-view.active{animation:none; transform:none; filter:none;}
   }
   
   /* Hiệu ứng chữ chạy cho tiêu đề mục */
@@ -445,9 +389,7 @@
   .feature{
     background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
     padding:16px 16px 18px; position:relative; transition:border-color .3s ease, transform .3s var(--ease-smooth), box-shadow .3s ease;
-    opacity:0; transform:translateY(14px);
   }
-  .feature.in-view{opacity:1; transform:translateY(0); transition:border-color .3s ease, transform .5s var(--ease-smooth), box-shadow .3s ease, opacity .5s ease;}
   .feature:hover{border-color:rgba(61,220,132,.4); transform:translateY(-4px); box-shadow:0 8px 20px rgba(0,0,0,.2), 0 0 15px rgba(61,220,132,.05);}
   .feature-ic{font-size:20px; display:inline-block; margin-bottom:8px; transition:transform .3s var(--ease-smooth);}
   .feature:hover .feature-ic{transform:scale(1.2) rotate(5deg);}
@@ -457,7 +399,6 @@
   }
   .feature p{margin:0; color:var(--muted); font-size:12.5px; line-height:1.55;}
   .feature code{color:var(--trace);}
-  @media (prefers-reduced-motion: reduce){ .feature{opacity:1; transform:none;} }
 
   /* ---------- compat banner ---------- */
   .compat-banner{
@@ -540,11 +481,12 @@
     border-radius:var(--radius);
     padding:20px 22px 18px;
     opacity:0; transform:translateY(10px);
-    transition:border-color .3s ease, transform .3s var(--ease-smooth), box-shadow .3s ease, opacity .5s ease;
+    animation:reveal .5s ease forwards;
+    transition:all .3s var(--ease-smooth);
   }
-  .card.in-view{opacity:1; transform:translateY(0);}
   .card:hover{border-color:rgba(61,220,132,.5); transform:translateY(-6px) scale(1.01); box-shadow:0 15px 35px rgba(0,0,0,.4), 0 0 20px rgba(61,220,132,.08);}
   .card:hover::before, .card:hover::after{opacity:.85;}
+  @keyframes reveal{to{opacity:1; transform:translateY(0);}}
   .card::before, .card::after{
     content:""; position:absolute; top:14px; bottom:14px; width:10px;
     background-image:repeating-linear-gradient(to bottom, var(--gold) 0 4px, transparent 4px 11px);
@@ -555,7 +497,6 @@
   .card:hover .hole{opacity:1; box-shadow:0 0 5px var(--trace);}
   .card .hole.tl{top:8px; left:8px;} .card .hole.tr{top:8px; right:8px;}
   .card .hole.bl{bottom:8px; left:8px;} .card .hole.br{bottom:8px; right:8px;}
-  @media (prefers-reduced-motion: reduce){ .card{opacity:1; transform:none;} }
 
   .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
   .card-name{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:18px; margin:0;}
@@ -594,14 +535,30 @@
   .author-badge .at{color:var(--muted); opacity:.6;}
   .author-badge .name{color:var(--gold);}
 
-  /* --- favorite star --- */
-  .fav-btn{
-    background:transparent; border:1px solid rgba(212,175,55,.35); color:var(--muted);
-    border-radius:var(--radius); width:32px; height:32px; cursor:pointer; font-size:14px;
-    display:inline-flex; align-items:center; justify-content:center; transition:all .2s ease; flex-shrink:0;
+  /* --- Favorite button --- */
+  .favorite-btn{
+    background:transparent; border:1px solid rgba(255,107,107,.3); color:var(--muted);
+    width:36px; height:36px; border-radius:var(--radius); cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:18px; line-height:1;
+    transition:all .3s var(--ease-smooth);
   }
-  .fav-btn:hover{border-color:var(--gold); color:var(--gold); transform:translateY(-2px);}
-  .fav-btn.active{color:var(--gold); border-color:var(--gold); background:rgba(212,175,55,.12); box-shadow:0 0 10px rgba(212,175,55,.2);}
+  .favorite-btn:hover{
+    border-color:var(--favorite); color:var(--favorite);
+    transform:translateY(-2px) scale(1.1);
+    box-shadow:0 4px 15px var(--favorite-glow);
+  }
+  .favorite-btn.active{
+    border-color:var(--favorite); color:var(--favorite);
+    background:rgba(255,107,107,.1);
+    box-shadow:0 0 15px var(--favorite-glow);
+    animation:favoritePulse .3s ease;
+  }
+  @keyframes favoritePulse{
+    0%{transform:scale(1);}
+    50%{transform:scale(1.3);}
+    100%{transform:scale(1);}
+  }
 
   .card-actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
   .btn{
@@ -716,7 +673,7 @@
   .confirm-actions .btn-flash:hover{background:#c67256;}
 
   /* toasts */
-  .toast-stack{position:fixed; bottom:20px; right:20px; z-index:50; display:flex; flex-direction:column; gap:8px; max-width:calc(100vw - 40px);}
+  .toast-stack{position:fixed; bottom:20px; right:20px; z-index:50; display:flex; flex-direction:column; gap:8px;}
   .toast{
     font-family:'JetBrains Mono',monospace; font-size:12.5px;
     background:var(--panel-2); border:1px solid var(--trace-dim); color:var(--text);
@@ -828,72 +785,9 @@
     .serial-console{min-height:300px;}
   }
 
-  /* ---------- boot screen (first-load POST sequence) ---------- */
-  #boot-screen{
-    position:fixed; inset:0; z-index:999; background:#040a06;
-    display:flex; align-items:center; justify-content:center; padding:20px;
-    transition:opacity .5s ease, visibility .5s ease;
-  }
-  #boot-screen.hide{opacity:0; visibility:hidden; pointer-events:none;}
-  #boot-log{
-    font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.85; color:var(--trace-dim);
-    max-width:560px; width:100%; white-space:pre-wrap;
-  }
-  #boot-log .ok{color:var(--trace);}
-  #boot-log .warn{color:var(--gold);}
-  #boot-log .cur::after{content:"█"; animation:blink 1s step-end infinite; color:var(--trace);}
-  #boot-skip{
-    position:absolute; bottom:24px; right:24px; font-family:'JetBrains Mono',monospace; font-size:11px;
-    color:var(--muted); background:transparent; border:1px solid rgba(61,220,132,.25); border-radius:var(--radius);
-    padding:7px 12px; cursor:pointer;
-  }
-  #boot-skip:hover{color:var(--trace); border-color:var(--trace);}
-
-  /* ---------- command palette ---------- */
-  .cmdk-overlay{
-    position:fixed; inset:0; z-index:200; display:none; align-items:flex-start; justify-content:center;
-    padding:12vh 20px 20px; background:rgba(4,8,6,.75); backdrop-filter:blur(6px);
-  }
-  .cmdk-overlay.show{display:flex;}
-  .cmdk-box{
-    width:min(560px,100%); background:linear-gradient(165deg, var(--panel-2), var(--panel));
-    border:1px solid rgba(61,220,132,.35); border-radius:var(--radius);
-    box-shadow:0 30px 80px rgba(0,0,0,.6); overflow:hidden;
-    animation:cmdk-in .18s var(--ease-smooth);
-  }
-  @keyframes cmdk-in{from{opacity:0; transform:translateY(-8px) scale(.98);} to{opacity:1; transform:translateY(0) scale(1);}}
-  .cmdk-input-row{display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px dashed rgba(61,220,132,.2);}
-  .cmdk-input-row span{color:var(--trace); font-family:'JetBrains Mono',monospace;}
-  #cmdk-input{
-    flex:1; background:transparent; border:none; outline:none; color:var(--text);
-    font-family:'JetBrains Mono',monospace; font-size:14px;
-  }
-  #cmdk-input::placeholder{color:var(--muted);}
-  .cmdk-list{max-height:340px; overflow-y:auto; padding:8px;}
-  .cmdk-item{
-    display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:var(--radius);
-    cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--text);
-  }
-  .cmdk-item .ic{color:var(--trace); width:18px; text-align:center; flex-shrink:0;}
-  .cmdk-item .meta{margin-left:auto; color:var(--muted); font-size:11px;}
-  .cmdk-item.active{background:rgba(61,220,132,.12);}
-  .cmdk-empty{padding:20px; text-align:center; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:12.5px;}
 </style>
 </head>
 <body>
-
-<div id="boot-screen"><div id="boot-log"></div><button id="boot-skip" type="button">Bỏ qua ⏭</button></div>
-
-<div class="cmdk-overlay" id="cmdk-overlay">
-  <div class="cmdk-box">
-    <div class="cmdk-input-row">
-      <span>&gt;</span>
-      <input id="cmdk-input" type="text" placeholder="Gõ lệnh hoặc tìm firmware... (vd: flash, serial, bruce)" autocomplete="off">
-    </div>
-    <div class="cmdk-list" id="cmdk-list"></div>
-  </div>
-</div>
-
 <svg class="side-rail left" viewBox="0 0 140 800" preserveAspectRatio="none" aria-hidden="true">
   <path d="M0 60 H60 V160 H30 V300 H70 V460 H20 V620 H60 V800" fill="none" stroke="#1c4d33" stroke-width="1.5"/>
   <circle cx="60" cy="60" r="3" fill="#3ddc84"/>
@@ -916,16 +810,10 @@
 <div class="wrap">
 
   <nav class="top-nav" aria-label="Điều hướng chính">
-    <div class="nav-links" id="nav-links">
-      <button class="nav-link active" data-view="info">Giới thiệu</button>
-      <button class="nav-link" data-view="firmware">Firmware</button>
-      <button class="nav-link" data-view="manual">Web Flasher</button>
-      <button class="nav-link" data-view="serial">Serial Monitor</button>
-    </div>
-    <div class="nav-tools">
-      <button class="nav-kbd-hint" id="cmdk-open-btn" type="button" title="Mở command palette"><kbd>Ctrl</kbd><kbd>K</kbd></button>
-      <button class="nav-burger" id="nav-burger" type="button" aria-label="Mở menu">☰</button>
-    </div>
+    <button class="nav-link active" data-view="info">Giới thiệu</button>
+    <button class="nav-link" data-view="firmware">Firmware</button>
+    <button class="nav-link" data-view="manual">Web Flasher</button>
+    <button class="nav-link" data-view="serial">Serial Monitor</button>
   </nav>
 
   <section id="view-info" class="page-view active">
@@ -1035,7 +923,9 @@
       <option value="size">Dung lượng</option>
     </select>
     <button class="tab active" data-filter="all">Tất cả</button>
-    <button class="tab" data-filter="__fav__">★ Yêu thích</button>
+    <button class="tab" data-filter="favorites" id="favorites-tab" style="border-color:rgba(255,107,107,.3); color:var(--favorite);">
+      ♥ Yêu thích
+    </button>
     <span id="board-tabs"></span>
     <div class="view-toggle" role="group" aria-label="Chế độ xem">
       <button id="view-grid" class="active" aria-label="Xem dạng lưới" title="Lưới">▦</button>
@@ -1076,33 +966,13 @@
       </label>
     </div>
 
-    <div class="mf-preset-row">
-      <label>Board preset
-        <select id="mf-board-preset" style="margin-left:8px">
-          <option value="">— tự chọn file/offset —</option>
-          <option value="ESP32">ESP32 (classic)</option>
-          <option value="ESP32-S2">ESP32-S2</option>
-          <option value="ESP32-S3">ESP32-S3</option>
-          <option value="ESP32-C3">ESP32-C3</option>
-          <option value="ESP32-C6">ESP32-C6</option>
-        </select>
-      </label>
-      <div class="mf-profile-actions">
-        <select id="mf-profile-select"><option value="">— hồ sơ đã lưu —</option></select>
-        <button id="mf-profile-load" class="btn btn-ghost btn-icon" type="button" title="Nạp hồ sơ">↺</button>
-        <button id="mf-profile-save" class="btn btn-ghost btn-icon" type="button" title="Lưu hồ sơ file hiện tại">💾</button>
-        <button id="mf-profile-del" class="btn btn-ghost btn-icon" type="button" title="Xoá hồ sơ đang chọn">✕</button>
-      </div>
-    </div>
-
-    <p class="mf-hint">Chọn 1 hoặc nhiều file <code>.bin</code>, mỗi file ghi vào một địa chỉ (offset) riêng. Kéo-thả file trực tiếp vào ô cũng được, hoặc chọn preset board ở trên để tự điền offset chuẩn (bootloader/partition-table/app).</p>
+    <p class="mf-hint">Chọn 1 hoặc nhiều file <code>.bin</code>, mỗi file ghi vào một địa chỉ (offset) riêng.</p>
 
     <div class="mf-files" id="mf-files">
       <div class="mf-file-row" data-row>
         <input type="file" accept=".bin,.bin.gz,application/octet-stream" class="mf-file-input">
         <input type="text" class="mf-addr-input mono" value="0x0" spellcheck="false">
         <button class="btn btn-ghost btn-icon mf-remove-row" type="button" title="Xoá dòng">✕</button>
-        <div class="mf-file-hash"></div>
       </div>
     </div>
     <button id="mf-add-file" class="btn btn-ghost" type="button">+ Thêm file ở địa chỉ khác</button>
@@ -1249,75 +1119,36 @@
 
 <script>
 document.getElementById('year').textContent = new Date().getFullYear();
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-// =====================================================================
-// BOOT SEQUENCE — plays once per browser session on first load
-// =====================================================================
-(function bootSequence(){
-  const screen = document.getElementById('boot-screen');
-  const logEl = document.getElementById('boot-log');
-  const skipBtn = document.getElementById('boot-skip');
+// ---- Favorites management ----
+const FAVORITES_KEY = 'hungtesp_favorites';
+let favorites = new Set(JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]'));
 
-  if(sessionStorage.getItem('hungtesp_booted') === '1' || prefersReducedMotion){
-    screen.remove();
-    return;
-  }
-
-  const lines = [
-    ['BOOT ROM v3.4 — hungtesp firmware hub', ''],
-    ['Checking flash layout...', 'ok'],
-    ['Mounting firmware_index.json', 'ok'],
-    ['Initializing Web Serial bridge...', 'ok'],
-    ['Calibrating trace glow...', 'ok'],
-    ['Loading UI modules: flasher, monitor, catalog', 'ok'],
-    ['Chào bạn, chào mừng đến với hungtesp.', ''],
-  ];
-
-  function finish(){
-    screen.classList.add('hide');
-    sessionStorage.setItem('hungtesp_booted', '1');
-    setTimeout(() => screen.remove(), 550);
-  }
-  skipBtn.addEventListener('click', finish);
-
-  let li = 0;
-  function typeLine(){
-    if(li >= lines.length){ setTimeout(finish, 400); return; }
-    const [text, cls] = lines[li];
-    const row = document.createElement('div');
-    row.className = 'cur' + (cls ? ' ' + cls : '');
-    logEl.appendChild(row);
-    let ci = 0;
-    const iv = setInterval(() => {
-      row.textContent = text.slice(0, ci+1);
-      ci++;
-      if(ci >= text.length){
-        clearInterval(iv);
-        row.classList.remove('cur');
-        li++;
-        setTimeout(typeLine, 90);
-      }
-    }, 14);
-  }
-  typeLine();
-})();
-
-// ---- top nav: switch between views, plus mobile burger menu ----
-const navLinks = document.getElementById('nav-links');
-const navBurger = document.getElementById('nav-burger');
-function switchView(view){
-  document.querySelectorAll('.nav-link').forEach(b => b.classList.toggle('active', b.dataset.view === view));
-  document.querySelectorAll('.page-view').forEach(v => v.classList.toggle('active', v.id === 'view-' + view));
-  navLinks.classList.remove('open');
-  window.scrollTo({top:0, behavior: prefersReducedMotion ? 'auto' : 'smooth'});
+function saveFavorites(){
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favorites]));
 }
+
+function toggleFavorite(itemName){
+  if(favorites.has(itemName)){
+    favorites.delete(itemName);
+    toast('Đã bỏ yêu thích: ' + itemName);
+  }else{
+    favorites.add(itemName);
+    toast('♥ Đã thêm vào yêu thích: ' + itemName);
+  }
+  saveFavorites();
+  render();
+}
+
+// ---- top nav: switch between "Giới thiệu" and "Firmware" views ----
 document.querySelectorAll('.nav-link').forEach(btn => {
-  btn.addEventListener('click', () => switchView(btn.dataset.view));
-});
-navBurger.addEventListener('click', () => navLinks.classList.toggle('open'));
-document.addEventListener('click', (e) => {
-  if(!navLinks.contains(e.target) && !navBurger.contains(e.target)) navLinks.classList.remove('open');
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
 });
 
 // ---- Web Serial support check ----
@@ -1341,21 +1172,6 @@ document.querySelectorAll('.guide-tab').forEach(t => {
   });
 });
 
-// ---- scroll-reveal via IntersectionObserver (perf: no fixed per-card animation delay) ----
-const revealObserver = ('IntersectionObserver' in window) ? new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if(entry.isIntersecting){
-      entry.target.classList.add('in-view');
-      revealObserver.unobserve(entry.target);
-    }
-  });
-}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }) : null;
-function observeReveal(el){
-  if(!revealObserver || prefersReducedMotion){ el.classList.add('in-view'); return; }
-  revealObserver.observe(el);
-}
-document.querySelectorAll('.feature').forEach(observeReveal);
-
 const grid = document.getElementById('grid');
 const searchEl = document.getElementById('search');
 const sortEl = document.getElementById('sort');
@@ -1365,19 +1181,6 @@ const topBtn = document.getElementById('top-btn');
 let ALL = [];
 let activeBoard = 'all';
 let viewMode = 'grid';
-let searchDebounce = null;
-
-// ---- favorites, persisted locally in the visitor's own browser ----
-const FAV_KEY = 'hungtesp_favs';
-function getFavs(){ try{ return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); }catch(e){ return []; } }
-function setFavs(arr){ try{ localStorage.setItem(FAV_KEY, JSON.stringify(arr)); }catch(e){} }
-function isFav(file){ return getFavs().includes(file); }
-function toggleFav(file){
-  const favs = getFavs();
-  const i = favs.indexOf(file);
-  if(i >= 0) favs.splice(i, 1); else favs.push(file);
-  setFavs(favs);
-}
 
 function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -1461,20 +1264,18 @@ function sortItems(items){
 function render(){
   const q = searchEl.value.trim().toLowerCase();
   let items = ALL.filter(it => {
-    const matchesBoard = activeBoard === 'all' || (activeBoard === '__fav__' ? isFav(it.file) : it.board === activeBoard);
+    const matchesBoard = activeBoard === 'all' || it.board === activeBoard;
+    const matchesFavorites = activeBoard !== 'favorites' || favorites.has(it.name);
     const hay = `${it.name} ${it.board} ${it.description||''} ${it.version||''} ${it.author||''}`.toLowerCase();
     const matchesQuery = !q || hay.includes(q);
-    return matchesBoard && matchesQuery;
+    return matchesBoard && matchesFavorites && matchesQuery;
   });
   items = sortItems(items);
 
   grid.classList.toggle('cols-2', viewMode === 'grid');
 
   if(!items.length){
-    const emptyMsg = activeBoard === '__fav__'
-      ? '&gt; chưa có firmware yêu thích nào. Bấm ★ trên card để lưu.'
-      : '&gt; không tìm thấy firmware nào khớp truy vấn.';
-    grid.innerHTML = `<div class="empty">${emptyMsg}<br><button class="btn btn-ghost" id="reset-filters">Xoá bộ lọc</button></div>`;
+    grid.innerHTML = `<div class="empty">&gt; không tìm thấy firmware nào khớp truy vấn.<br><button class="btn btn-ghost" id="reset-filters">Xoá bộ lọc</button></div>`;
     document.getElementById('reset-filters')?.addEventListener('click', () => {
       searchEl.value = ''; activeBoard = 'all';
       document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.filter === 'all'));
@@ -1484,7 +1285,7 @@ function render(){
   }
 
   grid.innerHTML = items.map((it, idx) => `
-    <article class="card" data-file="${esc(it.file)}">
+    <article class="card" style="animation-delay:${Math.min(idx,8) * 40}ms">
       <span class="hole tl"></span><span class="hole tr"></span><span class="hole bl"></span><span class="hole br"></span>
       <div class="card-top">
         <h3 class="card-name">${esc(it.name)}</h3>
@@ -1492,7 +1293,6 @@ function render(){
           ${canFlashInBrowser ? '<span class="badge-flashable">Flash Web</span>' : ''}
           <span class="badge">${esc(it.board || 'ESP32-S3')}</span>
           ${it.author ? `<span class="author-badge"><span class="at">@</span><span class="name">${esc(it.author)}</span></span>` : ''}
-          <button class="fav-btn${isFav(it.file) ? ' active' : ''}" data-fav="${esc(it.file)}" title="Đánh dấu yêu thích" type="button">★</button>
         </div>
       </div>
       <p class="card-desc">${esc(it.description || '')}</p>
@@ -1500,9 +1300,13 @@ function render(){
         <span><b>v${esc(it.version || '—')}</b></span>
         <span>Ngày: <b>${esc(it.date || '—')}</b></span>
         <span>Dung lượng: <b>${esc(it.size || '—')}</b></span>
-        ${it.sha256 ? `<span title="${esc(it.sha256)}">SHA256: <b>${esc(it.sha256.slice(0,10))}…</b></span>` : ''}
       </div>
       <div class="card-actions" data-idx="${idx}">
+        <button class="favorite-btn ${favorites.has(it.name) ? 'active' : ''}" 
+                data-fav="${esc(it.name)}" 
+                title="${favorites.has(it.name) ? 'Bỏ yêu thích' : 'Thêm vào yêu thích'}">
+          ${favorites.has(it.name) ? '♥' : '♡'}
+        </button>
         ${canFlashInBrowser ? `<span class="flash-wrap" data-flash-slot="${idx}"></span>` : ''}
         <a class="btn ${canFlashInBrowser ? 'btn-secondary' : 'btn-primary'}" href="firmware/${encodeURIComponent(it.file)}" download>Tải firmware</a>
         <button class="btn btn-ghost btn-icon" data-link="firmware/${esc(it.file)}" title="Copy link tải trực tiếp">🔗</button>
@@ -1510,6 +1314,13 @@ function render(){
       </div>
     </article>
   `).join('');
+
+  // Mount favorite button listeners
+  grid.querySelectorAll('.favorite-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      toggleFavorite(btn.dataset.fav);
+    });
+  });
 
   // Mount the real esp-web-install-button elements after innerHTML is set
   // (custom elements with dynamic manifest attrs are built here rather than
@@ -1537,21 +1348,13 @@ function render(){
       catch(e){ toast('Không copy được — trình duyệt chặn clipboard'); }
     });
   });
-
-  grid.querySelectorAll('[data-fav]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      toggleFav(btn.dataset.fav);
-      btn.classList.toggle('active');
-      if(activeBoard === '__fav__' && !btn.classList.contains('active')) render();
-    });
-  });
-
-  grid.querySelectorAll('.card').forEach(observeReveal);
 }
 
 function buildTabs(){
   const boards = [...new Set(ALL.map(i => i.board).filter(Boolean))];
   tabsEl.innerHTML = boards.map(b => `<button class="tab" data-filter="${esc(b)}">${esc(b)}</button>`).join('');
+  
+  // Add event listeners for all tabs including "all" and "favorites"
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
@@ -1584,10 +1387,7 @@ fetch('firmware.json')
     document.getElementById('retry-fetch')?.addEventListener('click', () => location.reload());
   });
 
-searchEl.addEventListener('input', () => {
-  clearTimeout(searchDebounce);
-  searchDebounce = setTimeout(render, 180);
-});
+searchEl.addEventListener('input', render);
 sortEl.addEventListener('change', render);
 
 document.getElementById('view-grid').addEventListener('click', () => {
@@ -1606,7 +1406,7 @@ document.getElementById('view-list').addEventListener('click', () => {
 window.addEventListener('scroll', () => {
   topBtn.classList.toggle('show', window.scrollY > 400);
 });
-topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior: prefersReducedMotion ? 'auto' : 'smooth'}));
+topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
 
 // =====================================================================
 // TAB "TỰ FLASH FILE .BIN" — dùng esptool-js (Espressif) qua Web Serial
@@ -1638,11 +1438,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior: prefers
   const mfPanel = $('mf-panel');
   const mfLed = $('mf-led');
   const mfStatusText = $('mf-status-text');
-  const boardPresetSel = $('mf-board-preset');
-  const profileSel = $('mf-profile-select');
-  const profileLoadBtn = $('mf-profile-load');
-  const profileSaveBtn = $('mf-profile-save');
-  const profileDelBtn = $('mf-profile-del');
 
   let esploaderMod = null;   // cached dynamic import of esptool-js
   let transport = null;
@@ -1692,93 +1487,27 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior: prefers
 
   consoleClearBtn.addEventListener('click', () => { consoleEl.innerHTML = ''; log('Đã xoá log.'); });
 
-  // ---- standard flash offset layouts per chip family (bootloader / partition-table / app) ----
-  const BOARD_LAYOUTS = {
-    'ESP32':    [{ label: 'bootloader.bin', addr: '0x1000' }, { label: 'partitions.bin', addr: '0x8000' }, { label: 'firmware.bin',   addr: '0x10000' }],
-    'ESP32-S2': [{ label: 'bootloader.bin', addr: '0x1000' }, { label: 'partitions.bin', addr: '0x8000' }, { label: 'firmware.bin',   addr: '0x10000' }],
-    'ESP32-S3': [{ label: 'bootloader.bin', addr: '0x0'    }, { label: 'partitions.bin', addr: '0x8000' }, { label: 'firmware.bin',   addr: '0x10000' }],
-    'ESP32-C3': [{ label: 'bootloader.bin', addr: '0x0'    }, { label: 'partitions.bin', addr: '0x8000' }, { label: 'firmware.bin',   addr: '0x10000' }],
-    'ESP32-C6': [{ label: 'bootloader.bin', addr: '0x0'    }, { label: 'partitions.bin', addr: '0x8000' }, { label: 'firmware.bin',   addr: '0x10000' }],
-  };
-
-  function applyBoardPreset(chip){
-    const layout = BOARD_LAYOUTS[chip];
-    if(!layout) return;
-    filesWrap.innerHTML = '';
-    layout.forEach(part => addFileRow(part.addr, part.label));
-    toast(`Đã điền offset chuẩn cho ${chip}`);
-  }
-  boardPresetSel.addEventListener('change', () => {
-    if(boardPresetSel.value) applyBoardPreset(boardPresetSel.value);
-  });
-
-  // ---- SHA256 checksum for a selected file, computed locally via SubtleCrypto ----
-  async function computeSHA256(file){
-    const buf = await file.arrayBuffer();
-    const digest = await crypto.subtle.digest('SHA-256', buf);
-    return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-  async function updateRowHash(row, file){
-    const hashEl = row.querySelector('.mf-file-hash');
-    if(!file || !window.crypto?.subtle){ hashEl.classList.remove('show'); hashEl.innerHTML = ''; return; }
-    hashEl.classList.add('show');
-    hashEl.innerHTML = 'SHA256: đang tính...';
-    try{
-      const hash = await computeSHA256(file);
-      hashEl.innerHTML = `SHA256: <b>${hash.slice(0,16)}…</b> <button type="button" data-copy-hash="${hash}">copy</button>`;
-      hashEl.querySelector('[data-copy-hash]')?.addEventListener('click', async (e) => {
-        try{ await navigator.clipboard.writeText(e.target.dataset.copyHash); toast('✓ Đã copy SHA256'); }
-        catch(err){ toast('Không copy được'); }
-      });
-    }catch(e){
-      hashEl.innerHTML = 'SHA256: không tính được';
-    }
-  }
-
   function wireFileRow(row){
     const fileInput = row.querySelector('.mf-file-input');
     fileInput.addEventListener('change', () => {
-      const file = fileInput.files[0];
-      row.classList.toggle('has-file', !!file);
-      updateRowHash(row, file);
-    });
-
-    // drag & drop a .bin straight onto the row
-    ['dragenter','dragover'].forEach(evt => row.addEventListener(evt, (e) => {
-      e.preventDefault(); e.stopPropagation();
-      row.classList.add('drag-over');
-    }));
-    ['dragleave','drop'].forEach(evt => row.addEventListener(evt, (e) => {
-      e.preventDefault(); e.stopPropagation();
-      row.classList.remove('drag-over');
-    }));
-    row.addEventListener('drop', (e) => {
-      const dropped = e.dataTransfer?.files?.[0];
-      if(!dropped) return;
-      const dt = new DataTransfer();
-      dt.items.add(dropped);
-      fileInput.files = dt.files;
-      fileInput.dispatchEvent(new Event('change'));
+      row.classList.toggle('has-file', fileInput.files.length > 0);
     });
   }
 
-  function addFileRow(addr, placeholderName){
+  function addFileRow(){
     const row = document.createElement('div');
     row.className = 'mf-file-row';
     row.setAttribute('data-row','');
     row.innerHTML = `
-      <input type="file" accept=".bin,.bin.gz,application/octet-stream" class="mf-file-input" ${placeholderName ? `title="Gợi ý: ${placeholderName}"` : ''}>
-      <input type="text" class="mf-addr-input mono" value="${addr || '0x0'}" spellcheck="false">
+      <input type="file" accept=".bin,.bin.gz,application/octet-stream" class="mf-file-input">
+      <input type="text" class="mf-addr-input mono" value="0x0" spellcheck="false">
       <button class="btn btn-ghost btn-icon mf-remove-row" type="button" title="Xoá dòng">✕</button>
-      <div class="mf-file-hash"></div>
     `;
     // Ép animation chạy lại khi thêm dòng mới
-    if(!prefersReducedMotion){
-      row.style.animation = 'none';
-      row.offsetHeight; /* trigger reflow */
-      row.style.animation = '';
-    }
-
+    row.style.animation = 'none';
+    row.offsetHeight; /* trigger reflow */
+    row.style.animation = '';
+    
     filesWrap.appendChild(row);
     wireFileRow(row);
     row.querySelector('.mf-remove-row').addEventListener('click', () => {
@@ -1787,59 +1516,19 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior: prefers
     });
   }
   filesWrap.querySelectorAll('.mf-file-row').forEach(wireFileRow);
-  addFileBtn.addEventListener('click', () => addFileRow('0x0'));
+  filesWrap.querySelectorAll('.mf-remove-row').forEach(b => {
+    b.addEventListener('click', () => {
+      if(filesWrap.children.length > 1) b.closest('.mf-file-row').remove();
+      else toast('Cần ít nhất 1 file');
+    });
+  });
+  addFileBtn.addEventListener('click', addFileRow);
 
   function parseAddress(str){
     const v = String(str).trim();
     const n = v.toLowerCase().startsWith('0x') ? parseInt(v, 16) : parseInt(v, 10);
     return Number.isFinite(n) ? n : NaN;
   }
-
-  // ---- flash profiles: remember a set of offsets (not the actual file bytes) per name ----
-  const PROFILE_KEY = 'hungtesp_flash_profiles';
-  function getProfiles(){ try{ return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}'); }catch(e){ return {}; } }
-  function setProfiles(p){ try{ localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }catch(e){} }
-  function refreshProfileOptions(){
-    const profiles = getProfiles();
-    const names = Object.keys(profiles);
-    profileSel.innerHTML = '<option value="">— hồ sơ đã lưu —</option>' +
-      names.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
-  }
-  refreshProfileOptions();
-
-  profileSaveBtn.addEventListener('click', async () => {
-    const rows = [...filesWrap.querySelectorAll('.mf-file-row')];
-    const addrs = rows.map(r => r.querySelector('.mf-addr-input').value);
-    const name = prompt('Đặt tên cho hồ sơ offset này (vd: "S3 3-part"):');
-    if(!name) return;
-    const profiles = getProfiles();
-    profiles[name] = { addrs, mode: $('mf-mode').value, freq: $('mf-freq').value, size: $('mf-size').value };
-    setProfiles(profiles);
-    refreshProfileOptions();
-    profileSel.value = name;
-    toast(`✓ Đã lưu hồ sơ "${name}"`);
-  });
-  profileLoadBtn.addEventListener('click', () => {
-    const name = profileSel.value;
-    if(!name) { toast('Chọn hồ sơ trước'); return; }
-    const profile = getProfiles()[name];
-    if(!profile) return;
-    filesWrap.innerHTML = '';
-    profile.addrs.forEach(a => addFileRow(a));
-    if(profile.mode) $('mf-mode').value = profile.mode;
-    if(profile.freq) $('mf-freq').value = profile.freq;
-    if(profile.size) $('mf-size').value = profile.size;
-    toast(`✓ Đã nạp offset từ "${name}" — nhớ chọn lại file .bin`);
-  });
-  profileDelBtn.addEventListener('click', () => {
-    const name = profileSel.value;
-    if(!name) { toast('Chọn hồ sơ trước'); return; }
-    const profiles = getProfiles();
-    delete profiles[name];
-    setProfiles(profiles);
-    refreshProfileOptions();
-    toast(`Đã xoá hồ sơ "${name}"`);
-  });
 
   async function loadLib(){
     if(!esploaderMod){
@@ -1862,8 +1551,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior: prefers
     mfLed.classList.add('on');
     mfStatusText.textContent = 'Đã kết nối · ' + (chipName || '');
     mfPanel.classList.add('is-connected');
-    // auto-select a matching board preset in the dropdown, purely as a convenience hint
-    const guess = Object.keys(BOARD_LAYOUTS).find(k => (chipName || '').toUpperCase().includes(k.replace('ESP32-','').replace('ESP32','32')));
   }
   function setDisconnectedUI(){
     connected = false;
@@ -2218,88 +1905,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior: prefers
       if(typeof toast === 'function') toast('⚠ Serial Monitor mất kết nối');
     }
   });
-})();
-
-// =====================================================================
-// COMMAND PALETTE — Ctrl/Cmd+K, jump between tabs or firmware search results
-// =====================================================================
-(function commandPalette(){
-  const overlay = document.getElementById('cmdk-overlay');
-  const input = document.getElementById('cmdk-input');
-  const list = document.getElementById('cmdk-list');
-  const openBtn = document.getElementById('cmdk-open-btn');
-  let activeIndex = 0;
-
-  function staticCommands(){
-    return [
-      { ic:'▤', label:'Xem trang Giới thiệu', meta:'Trang', run: () => switchView('info') },
-      { ic:'▦', label:'Xem danh sách Firmware', meta:'Trang', run: () => switchView('firmware') },
-      { ic:'⚡', label:'Mở Web Flasher', meta:'Trang', run: () => switchView('manual') },
-      { ic:'▶', label:'Mở Serial Monitor', meta:'Trang', run: () => switchView('serial') },
-      { ic:'↑', label:'Lên đầu trang', meta:'Thao tác', run: () => window.scrollTo({top:0, behavior: prefersReducedMotion ? 'auto' : 'smooth'}) },
-    ];
-  }
-
-  function firmwareCommands(q){
-    if(!q) return [];
-    return ALL.filter(it => `${it.name} ${it.board} ${it.description||''}`.toLowerCase().includes(q.toLowerCase()))
-      .slice(0, 6)
-      .map(it => ({
-        ic:'▣', label:`Tìm "${it.name}" trong Firmware`, meta: it.board || '',
-        run: () => { switchView('firmware'); searchEl.value = it.name; render(); }
-      }));
-  }
-
-  function renderList(){
-    const q = input.value.trim();
-    const cmds = q ? [...staticCommands().filter(c => c.label.toLowerCase().includes(q.toLowerCase())), ...firmwareCommands(q)] : staticCommands();
-    activeIndex = 0;
-    if(!cmds.length){
-      list.innerHTML = `<div class="cmdk-empty">Không tìm thấy lệnh nào khớp.</div>`;
-      return;
-    }
-    list.innerHTML = cmds.map((c, i) => `
-      <div class="cmdk-item${i===0 ? ' active' : ''}" data-idx="${i}">
-        <span class="ic">${c.ic}</span><span>${esc(c.label)}</span><span class="meta">${esc(c.meta||'')}</span>
-      </div>
-    `).join('');
-    list.querySelectorAll('.cmdk-item').forEach((el, i) => {
-      el.addEventListener('mouseenter', () => setActive(i));
-      el.addEventListener('click', () => { cmds[i].run(); close(); });
-    });
-    renderList.current = cmds;
-  }
-  function setActive(i){
-    activeIndex = i;
-    list.querySelectorAll('.cmdk-item').forEach((el, idx) => el.classList.toggle('active', idx === i));
-  }
-
-  function open(){
-    overlay.classList.add('show');
-    input.value = '';
-    renderList();
-    setTimeout(() => input.focus(), 10);
-  }
-  function close(){ overlay.classList.remove('show'); }
-
-  openBtn.addEventListener('click', open);
-  overlay.addEventListener('click', (e) => { if(e.target === overlay) close(); });
-  document.addEventListener('keydown', (e) => {
-    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k'){
-      e.preventDefault();
-      overlay.classList.contains('show') ? close() : open();
-    }
-    if(!overlay.classList.contains('show')) return;
-    if(e.key === 'Escape') close();
-    if(e.key === 'ArrowDown'){ e.preventDefault(); const n = list.querySelectorAll('.cmdk-item').length; if(n) setActive((activeIndex+1)%n); }
-    if(e.key === 'ArrowUp'){ e.preventDefault(); const n = list.querySelectorAll('.cmdk-item').length; if(n) setActive((activeIndex-1+n)%n); }
-    if(e.key === 'Enter'){
-      e.preventDefault();
-      const cmds = renderList.current || [];
-      if(cmds[activeIndex]){ cmds[activeIndex].run(); close(); }
-    }
-  });
-  input.addEventListener('input', renderList);
 })();
 
 </script>
