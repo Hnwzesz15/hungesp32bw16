@@ -468,7 +468,9 @@
   .view-toggle button.active{background:rgba(61,220,132,.14); color:var(--trace);}
   .view-toggle button:hover{color:var(--trace);}
 
-  /* ---------- firmware cards (IC module look) ---------- */
+  /* ================================================================
+     FIRMWARE CARD — LED CHASING BORDER
+     ================================================================ */
   .grid{display:grid; gap:16px; grid-template-columns:1fr;}
   .grid.cols-2{grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));}
   @media (max-width:640px){ .grid.cols-2{grid-template-columns:1fr;} }
@@ -497,7 +499,65 @@
   .card .hole.tl{top:8px; left:8px;} .card .hole.tr{top:8px; right:8px;}
   .card .hole.bl{bottom:8px; left:8px;} .card .hole.br{bottom:8px; right:8px;}
 
-  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
+  /* LED CHASING BORDER trên từng card */
+  .card-led-border {
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    border-radius: var(--radius);
+    overflow: hidden;
+    z-index: 0;
+  }
+  .card-led-border .led-dot {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--trace);
+    box-shadow: 0 0 8px var(--trace), 0 0 16px var(--trace);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .card-led-border .led-dot.active {
+    opacity: 1;
+  }
+  /* Vị trí các LED trên viền card — 4 cạnh, mỗi cạnh 6 LED */
+  .card-led-border .top { top: 4px; }
+  .card-led-border .bottom { bottom: 4px; }
+  .card-led-border .left { left: 4px; }
+  .card-led-border .right { right: 4px; }
+
+  .card-led-border .top:nth-child(1)  { left: 6px; }
+  .card-led-border .top:nth-child(2)  { left: 30px; }
+  .card-led-border .top:nth-child(3)  { left: 54px; }
+  .card-led-border .top:nth-child(4)  { left: 78px; }
+  .card-led-border .top:nth-child(5)  { left: 102px; }
+  .card-led-border .top:nth-child(6)  { left: 126px; }
+
+  .card-led-border .right:nth-child(7)  { top: 6px; }
+  .card-led-border .right:nth-child(8)  { top: 30px; }
+  .card-led-border .right:nth-child(9)  { top: 54px; }
+  .card-led-border .right:nth-child(10) { top: 78px; }
+  .card-led-border .right:nth-child(11) { top: 102px; }
+  .card-led-border .right:nth-child(12) { top: 126px; }
+
+  .card-led-border .bottom:nth-child(13) { left: 126px; }
+  .card-led-border .bottom:nth-child(14) { left: 102px; }
+  .card-led-border .bottom:nth-child(15) { left: 78px; }
+  .card-led-border .bottom:nth-child(16) { left: 54px; }
+  .card-led-border .bottom:nth-child(17) { left: 30px; }
+  .card-led-border .bottom:nth-child(18) { left: 6px; }
+
+  .card-led-border .left:nth-child(19) { top: 126px; }
+  .card-led-border .left:nth-child(20) { top: 102px; }
+  .card-led-border .left:nth-child(21) { top: 78px; }
+  .card-led-border .left:nth-child(22) { top: 54px; }
+  .card-led-border .left:nth-child(23) { top: 30px; }
+  .card-led-border .left:nth-child(24) { top: 6px; }
+
+  /* ================================================================ */
+
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; position:relative; z-index:1;}
   .card-name{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:18px; margin:0;}
   .card-badges{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
   .badge{
@@ -514,8 +574,8 @@
     transition:box-shadow .3s ease;
   }
   .card:hover .badge-flashable{box-shadow:0 0 10px rgba(61,220,132,.4);}
-  .card-desc{color:var(--muted); font-size:13.5px; line-height:1.55; margin:10px 0 14px;}
-  .meta-row{display:flex; gap:18px; flex-wrap:wrap; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-bottom:16px;}
+  .card-desc{color:var(--muted); font-size:13.5px; line-height:1.55; margin:10px 0 14px; position:relative; z-index:1;}
+  .meta-row{display:flex; gap:18px; flex-wrap:wrap; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-bottom:16px; position:relative; z-index:1;}
   .meta-row b{color:var(--text); font-weight:500;}
 
   /* --- Author badge --- */
@@ -534,7 +594,7 @@
   .author-badge .at{color:var(--muted); opacity:.6;}
   .author-badge .name{color:var(--gold);}
 
-  .card-actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .card-actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center; position:relative; z-index:1;}
   .btn{
     font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.03em;
     padding:9px 14px; border-radius:var(--radius); text-decoration:none; cursor:pointer;
@@ -762,6 +822,33 @@
 </style>
 </head>
 <body>
+<!-- LED CHASING BORDER trên toàn trang -->
+<div class="led-border" id="pageLedBorder">
+  <!-- Cạnh trên (12 LED) -->
+  <span class="led top"></span><span class="led top"></span><span class="led top"></span>
+  <span class="led top"></span><span class="led top"></span><span class="led top"></span>
+  <span class="led top"></span><span class="led top"></span><span class="led top"></span>
+  <span class="led top"></span><span class="led top"></span><span class="led top"></span>
+  
+  <!-- Cạnh phải (12 LED) -->
+  <span class="led right"></span><span class="led right"></span><span class="led right"></span>
+  <span class="led right"></span><span class="led right"></span><span class="led right"></span>
+  <span class="led right"></span><span class="led right"></span><span class="led right"></span>
+  <span class="led right"></span><span class="led right"></span><span class="led right"></span>
+  
+  <!-- Cạnh dưới (12 LED) -->
+  <span class="led bottom"></span><span class="led bottom"></span><span class="led bottom"></span>
+  <span class="led bottom"></span><span class="led bottom"></span><span class="led bottom"></span>
+  <span class="led bottom"></span><span class="led bottom"></span><span class="led bottom"></span>
+  <span class="led bottom"></span><span class="led bottom"></span><span class="led bottom"></span>
+  
+  <!-- Cạnh trái (12 LED) -->
+  <span class="led left"></span><span class="led left"></span><span class="led left"></span>
+  <span class="led left"></span><span class="led left"></span><span class="led left"></span>
+  <span class="led left"></span><span class="led left"></span><span class="led left"></span>
+  <span class="led left"></span><span class="led left"></span><span class="led left"></span>
+</div>
+
 <svg class="side-rail left" viewBox="0 0 140 800" preserveAspectRatio="none" aria-hidden="true">
   <path d="M0 60 H60 V160 H30 V300 H70 V460 H20 V620 H60 V800" fill="none" stroke="#1c4d33" stroke-width="1.5"/>
   <circle cx="60" cy="60" r="3" fill="#3ddc84"/>
@@ -1089,6 +1176,199 @@
 </div>
 
 <script>
+// ================================================================
+// LED CHASING BORDER — toàn trang
+// ================================================================
+(function initPageLedBorder() {
+  const leds = document.querySelectorAll('#pageLedBorder .led');
+  const total = leds.length;
+  let current = 0;
+  let intervalId = null;
+  let ledSpeed = 80; // ms per step
+  
+  function updateLeds() {
+    leds.forEach((led, i) => {
+      led.classList.toggle('active', i === current);
+    });
+    current = (current + 1) % total;
+  }
+  
+  function startChasing() {
+    if (intervalId) clearInterval(intervalId);
+    intervalId = setInterval(updateLeds, ledSpeed);
+  }
+  
+  function stopChasing() {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  }
+  
+  // Hiệu ứng chỉ chạy khi trang được focus và không ở chế độ tiết kiệm pin
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopChasing();
+    } else {
+      startChasing();
+    }
+  });
+  
+  // Khởi động
+  startChasing();
+  
+  // Dừng khi người dùng tương tác với scroll để tiết kiệm tài nguyên
+  let scrollTimer = null;
+  window.addEventListener('scroll', () => {
+    stopChasing();
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(startChasing, 2000);
+  });
+  
+  // Tăng tốc khi hover vào card
+  document.addEventListener('mouseover', (e) => {
+    const card = e.target.closest('.card');
+    if (card) {
+      stopChasing();
+      // Chạy nhanh hơn khi hover
+      intervalId = setInterval(updateLeds, 40);
+    }
+  });
+  
+  document.addEventListener('mouseout', (e) => {
+    const card = e.target.closest('.card');
+    if (card) {
+      stopChasing();
+      intervalId = setInterval(updateLeds, ledSpeed);
+    }
+  });
+})();
+
+// ================================================================
+// LED CHASING BORDER — cho từng card firmware (tạo động)
+// ================================================================
+(function initCardLedBorders() {
+  // Hàm tạo border LED cho một card
+  function createCardLedBorder(card) {
+    // Kiểm tra đã có border chưa
+    if (card.querySelector('.card-led-border')) return;
+    
+    const border = document.createElement('div');
+    border.className = 'card-led-border';
+    
+    // Tạo 24 LED (6 mỗi cạnh)
+    const positions = [
+      // Top (6)
+      { side: 'top', count: 6 },
+      // Right (6)
+      { side: 'right', count: 6 },
+      // Bottom (6)
+      { side: 'bottom', count: 6 },
+      // Left (6)
+      { side: 'left', count: 6 }
+    ];
+    
+    let ledIndex = 0;
+    positions.forEach(({ side, count }) => {
+      for (let i = 0; i < count; i++) {
+        const dot = document.createElement('span');
+        dot.className = `led-dot ${side}`;
+        // Vị trí được định nghĩa trong CSS dựa trên nth-child
+        border.appendChild(dot);
+        ledIndex++;
+      }
+    });
+    
+    card.prepend(border);
+    
+    // Khởi tạo animation cho border này
+    const dots = border.querySelectorAll('.led-dot');
+    const totalDots = dots.length;
+    let currentDot = 0;
+    let intervalId = null;
+    let isHovered = false;
+    let speed = 120;
+    
+    function updateDots() {
+      dots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === currentDot);
+      });
+      currentDot = (currentDot + 1) % totalDots;
+    }
+    
+    function start() {
+      if (intervalId) return;
+      intervalId = setInterval(updateDots, speed);
+    }
+    
+    function stop() {
+      if (intervalId) {
+        clearInterval(intervalId);
+        intervalId = null;
+      }
+      // Tắt hết LED
+      dots.forEach(d => d.classList.remove('active'));
+    }
+    
+    // Chạy khi card visible
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          start();
+        } else {
+          stop();
+        }
+      });
+    }, { threshold: 0.1 });
+    
+    observer.observe(card);
+    
+    // Tăng tốc khi hover
+    card.addEventListener('mouseenter', () => {
+      isHovered = true;
+      stop();
+      speed = 40;
+      start();
+    });
+    
+    card.addEventListener('mouseleave', () => {
+      isHovered = false;
+      stop();
+      speed = 120;
+      start();
+    });
+    
+    // Cleanup
+    card._ledCleanup = () => {
+      observer.disconnect();
+      stop();
+    };
+  }
+  
+  // Observer để thêm border cho các card mới được render
+  const cardObserver = new MutationObserver(() => {
+    document.querySelectorAll('.card:not([data-led-initialized])').forEach(card => {
+      card.setAttribute('data-led-initialized', 'true');
+      createCardLedBorder(card);
+    });
+  });
+  
+  cardObserver.observe(document.getElementById('grid'), {
+    childList: true,
+    subtree: true
+  });
+  
+  // Khởi tạo cho các card hiện có
+  document.querySelectorAll('.card').forEach(createCardLedBorder);
+  
+  // Cleanup khi trang unload
+  window.addEventListener('beforeunload', () => {
+    document.querySelectorAll('.card').forEach(card => {
+      if (card._ledCleanup) card._ledCleanup();
+    });
+  });
+})();
+
 document.getElementById('year').textContent = new Date().getFullYear();
 
 // ---- top nav: switch between "Giới thiệu" and "Firmware" views ----
