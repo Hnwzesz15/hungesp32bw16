@@ -1719,8 +1719,8 @@ input[type="checkbox"].vip-switch-input:checked + .vip-switch::after{
 
       <div class="vip-key-section">
         <div class="vip-key-label">
-          <span>Nhập Key Kích Hoạt (tối đa 140 ký tự Hex)</span>
-          <span class="vip-key-counter mono" id="vip-key-counter">0/140 HEX</span>
+          <span>Nhập Key Kích Hoạt (tối đa 160 ký tự Hex)</span>
+          <span class="vip-key-counter mono" id="vip-key-counter">0/160 HEX</span>
         </div>
         <div class="vip-activate-keyrow">
           <input type="text" id="vip-act-key" class="key-input mono" placeholder="Dán key được cung cấp..." autocomplete="off" spellcheck="false" maxlength="160">
@@ -2838,7 +2838,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
 
   let port = null, reader = null, reading = false, buffer = '';
   let detectedMac = '';
-  const KEY_MAX_LEN = 140;
+  const KEY_MAX_LEN = 160;
 
   function setLicenseState(state, customMsg){
     if(!licenseBadge) return;
