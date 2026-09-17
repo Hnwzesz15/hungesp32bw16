@@ -1,0 +1,3561 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hungtesp · Firmware Hub</title>
+<meta name="description" content="Kho firmware ESP32-S3 của hungtesp — flash trực tiếp qua trình duyệt, không cần cài phần mềm.">
+<meta property="og:title" content="hungtesp · Firmware Hub">
+<meta property="og:description" content="Firmware ESP32-S3 tự build — flash qua web bằng Chrome/Edge, hoặc tải về dùng esptool.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0a150f">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%230f2317'/%3E%3Crect x='9' y='9' width='14' height='14' rx='1' fill='none' stroke='%233ddc84' stroke-width='2'/%3E%3Crect x='13' y='13' width='6' height='6' fill='%233ddc84'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+<style>
+  :root{
+    --bg:#0a150f; --bg-2:#0d1c14;
+    --panel:#0f2317; --panel-2:#12291b;
+    --mask:#1c4d33; --trace:#3ddc84; --trace-dim:#2a9c61;
+    --gold:#d4af37; --text:#e6f1ea; --muted:#7f9c8c;
+    --danger:#e2725b; --radius:2px;
+    
+    --glow-trace: rgba(61, 220, 132, 0.35);
+    --glow-gold: rgba(212, 175, 55, 0.35);
+    --ease-smooth: cubic-bezier(0.19, 1, 0.22, 1);
+  }
+  
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at top left, #0f2317 0%, transparent 55%),
+      radial-gradient(ellipse at bottom right, #0d2418 0%, transparent 50%),
+      var(--bg);
+    color:var(--text); font-family:'Inter',sans-serif;
+    min-height:100vh; background-attachment:fixed;
+  }
+  body::before{
+    content:""; position:fixed; inset:0;
+    background-image:
+      linear-gradient(rgba(61,220,132,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(61,220,132,.05) 1px, transparent 1px);
+    background-size:34px 34px; pointer-events:none; z-index:0;
+    mask-image:radial-gradient(ellipse at 30% 0%, black 0%, transparent 70%);
+  }
+  .wrap{position:relative; z-index:1; max-width:1320px; margin:0 auto; padding:0 40px 80px;}
+  @media (max-width:900px){ .wrap{padding:0 20px 80px;} }
+  code, .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:inherit;}
+  :focus-visible{outline:2px solid var(--trace); outline-offset:2px;}
+
+  /* ============================================================
+     CUSTOM SCROLLBAR
+     ============================================================ */
+  *{
+    scrollbar-width: thin;
+    scrollbar-color: rgba(61,220,132,.35) transparent;
+  }
+  *::-webkit-scrollbar{ width:6px; height:6px; }
+  *::-webkit-scrollbar-track{ background:rgba(8,18,9,.6); border-radius:3px; }
+  *::-webkit-scrollbar-thumb{
+    background:linear-gradient(180deg, var(--trace-dim), var(--mask));
+    border-radius:3px;
+    border:1px solid rgba(61,220,132,.3);
+    transition:background .2s ease;
+  }
+  *::-webkit-scrollbar-thumb:hover{
+    background:linear-gradient(180deg, var(--trace), var(--trace-dim));
+    box-shadow:0 0 8px rgba(61,220,132,.4);
+  }
+  *::-webkit-scrollbar-corner{background:transparent;}
+
+  .vip-activate-box::-webkit-scrollbar,
+  .vip-smart-feed::-webkit-scrollbar,
+  .vip-activate-console::-webkit-scrollbar,
+  .serial-console::-webkit-scrollbar,
+  .mf-console::-webkit-scrollbar{
+    width:5px;
+  }
+  .vip-activate-box::-webkit-scrollbar-thumb,
+  .vip-smart-feed::-webkit-scrollbar-thumb,
+  .vip-activate-console::-webkit-scrollbar-thumb{
+    background:linear-gradient(180deg, rgba(212,175,55,.6), rgba(212,175,55,.25));
+    border-color:rgba(212,175,55,.4);
+  }
+  .vip-activate-box::-webkit-scrollbar-thumb:hover,
+  .vip-smart-feed::-webkit-scrollbar-thumb:hover,
+  .vip-activate-console::-webkit-scrollbar-thumb:hover{
+    background:linear-gradient(180deg, var(--gold), rgba(212,175,55,.5));
+    box-shadow:0 0 10px rgba(212,175,55,.5);
+  }
+
+  /* ---------- manual flash panel ---------- */
+  .mf-panel{
+    margin-top:14px; background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
+    padding:20px 22px 22px; transition:border-color .3s ease, box-shadow .3s ease, transform .3s var(--ease-smooth);
+  }
+  .mf-panel.is-connected{border-color:rgba(61,220,132,.4); box-shadow:0 0 30px rgba(61,220,132,.05); transform:translateY(-2px);}
+
+  .mf-statusbar{
+    display:flex; align-items:center; gap:10px; margin-bottom:16px; padding-bottom:14px;
+    border-bottom:1px dashed rgba(61,220,132,.16);
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted);
+  }
+  .mf-led{
+    width:8px; height:8px; border-radius:50%; background:#ff0000;
+    box-shadow:0 0 8px rgba(255,0,0,.9), inset 0 0 2px rgba(0,0,0,.3); flex-shrink:0;
+    transition:background .4s ease, box-shadow .4s ease;
+    animation:mf-led-pulse-red 1.4s ease-in-out infinite;
+  }
+  .mf-led.on{
+    background:var(--trace); box-shadow:0 0 8px var(--trace), 0 0 2px var(--trace);
+    animation:mf-led-pulse-green 2s ease-in-out infinite;
+  }
+  @keyframes mf-led-pulse-red{0%,100%{opacity:1;}50%{opacity:.35;}}
+  @keyframes mf-led-pulse-green{0%,100%{opacity:1;}50%{opacity:.55;}}
+
+  .mf-toolbar{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;}
+  .mf-baud-inline{margin-left:auto; display:flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);}
+  .mf-baud-inline select{padding:6px 22px 6px 8px; font-size:12px;}
+
+  .mf-hint{color:var(--muted); font-size:12.5px; line-height:1.6; margin:0 0 14px;}
+  .mf-hint code{color:var(--trace);}
+
+  #mf-chip-badge{transition:opacity .25s ease, transform .25s ease;}
+  #mf-chip-badge.pop{animation:mf-badge-pop .3s ease;}
+  @keyframes mf-badge-pop{from{opacity:0; transform:scale(.85);} to{opacity:1; transform:scale(1);}}
+
+  .mf-files{display:flex; flex-direction:column; gap:8px; margin-bottom:10px;}
+  .mf-file-row{
+    display:flex; gap:8px; align-items:center; 
+    animation:fileRowIn .5s var(--ease-smooth);
+  }
+  @keyframes fileRowIn{
+    0%{opacity:0; transform:translateY(-8px) scale(.97); filter:blur(4px);}
+    100%{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
+  }
+
+  .mf-file-row input[type="file"]{
+    flex:1; min-width:0; background:#081209; border:1px solid rgba(61,220,132,.25); color:var(--muted);
+    font-family:'JetBrains Mono',monospace; font-size:12px; padding:8px 10px; border-radius:var(--radius);
+    transition:border-color .2s ease, box-shadow .2s ease, transform .2s var(--ease-smooth);
+  }
+  .mf-file-row.has-file input[type="file"]{border-color:rgba(61,220,132,.6); box-shadow:0 0 0 1px rgba(61,220,132,.12); color:var(--text);}
+  .mf-file-row input[type="file"]::file-selector-button{
+    background:var(--trace); color:#062012; border:none; border-radius:var(--radius);
+    padding:6px 10px; margin-right:10px; font-family:'JetBrains Mono',monospace; font-size:11.5px;
+    font-weight:700; cursor:pointer; transition:background .15s ease, transform .2s var(--ease-smooth);
+  }
+  .mf-file-row input[type="file"]::file-selector-button:hover{background:#4be996; transform:translateY(-1px);}
+  .mf-addr-input{width:110px; flex:none; text-align:center;}
+  .mf-remove-row{color:var(--danger); border-color:rgba(226,114,91,.4);}
+  .mf-remove-row:hover{border-color:var(--danger); background:rgba(226,114,91,.1);}
+
+  #mf-add-file{
+    position:relative;
+    transition:all .3s var(--ease-smooth);
+    letter-spacing:.03em;
+  }
+  #mf-add-file:hover{
+    transform:translateY(-2px);
+    box-shadow:0 4px 15px var(--glow-trace);
+    background:rgba(61,220,132,.08);
+    letter-spacing:.08em; 
+  }
+  #mf-add-file:active{transform:translateY(0) scale(.98);}
+
+  .mf-advanced{
+    margin:14px 0 0; 
+    border:1px solid rgba(61,220,132,.16); 
+    border-radius:var(--radius); 
+    background:#0c1e14;
+    transition:border-color .3s ease, box-shadow .3s ease;
+  }
+  .mf-advanced[open]{
+    border-color:rgba(61,220,132,.4); 
+    box-shadow:0 0 20px rgba(61,220,132,.08), inset 0 0 20px rgba(61,220,132,.02);
+  }
+  .mf-advanced summary{
+    cursor:pointer; list-style:none; padding:12px 16px; font-family:'JetBrains Mono',monospace;
+    font-size:12.5px; color:var(--trace); user-select:none; transition:background .15s ease, letter-spacing .3s ease;
+    display:flex; align-items:center; gap:10px;
+  }
+  .mf-advanced summary::-webkit-details-marker{display:none;}
+  .mf-advanced summary::before{
+    content:""; width:8px; height:8px; border-radius:50%; background:var(--trace); 
+    box-shadow:0 0 8px var(--trace); transition:transform .3s var(--ease-smooth);
+  }
+  .mf-advanced[open] summary::before{
+    transform:scale(1.5); background:var(--gold); box-shadow:0 0 12px var(--gold);
+  }
+  .mf-advanced summary:hover{background:rgba(61,220,132,.05); letter-spacing:.05em;}
+  
+  .mf-adv-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:14px; padding:4px 16px 16px;
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);
+    opacity:0;
+    transform:translateY(-8px);
+    transition:opacity .45s var(--ease-smooth), transform .45s var(--ease-smooth);
+  }
+  .mf-advanced[open] .mf-adv-grid{
+    opacity:1;
+    transform:translateY(0);
+  }
+  
+  @media (max-width:700px){ .mf-adv-grid{grid-template-columns:1fr 1fr;} }
+  .mf-adv-grid label{display:flex; flex-direction:column; gap:6px;}
+  .mf-adv-grid select{width:100%; transition:box-shadow .2s ease, border-color .2s ease;}
+  .mf-adv-grid select:hover{box-shadow:0 0 8px rgba(61,220,132,.2); border-color:var(--trace);}
+  .mf-checkbox{flex-direction:row !important; align-items:center; gap:8px !important; grid-column:span 1;}
+  .mf-checkbox input[type="checkbox"]{accent-color:var(--trace); width:15px; height:15px;}
+
+  .btn{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.03em;
+    padding:9px 14px; border-radius:var(--radius); text-decoration:none; cursor:pointer;
+    display:inline-flex; align-items:center; gap:7px; border:1px solid transparent; background:none;
+    position:relative; overflow:hidden;
+    transition:all .3s var(--ease-smooth);
+    box-shadow:0 2px 5px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+  
+  .btn::after{
+    content:""; position:absolute; inset:0;
+    background:radial-gradient(circle, rgba(255,255,255,.4) 0%, transparent 60%);
+    opacity:0; transform:scale(0); transition:transform .5s var(--ease-smooth), opacity .5s;
+  }
+  .btn:active::after{ opacity:1; transform:scale(2); transition:0s; }
+  .btn:active{transform:translateY(1px) scale(.97); box-shadow:0 0 2px rgba(0,0,0,.4);}
+  
+  .btn-primary{background:var(--trace); color:#062012; font-weight:700;}
+  .btn-primary:hover{background:#4be996; transform:translateY(-2px); box-shadow:0 4px 15px var(--glow-trace);}
+  
+  .btn-flash{background:var(--gold); color:#241c02; font-weight:700; border-color:var(--gold);}
+  .btn-flash:hover{background:#e7c257; transform:translateY(-2px); box-shadow:0 4px 15px var(--glow-gold);}
+  
+  .btn-secondary{background:transparent; border-color:rgba(61,220,132,.5); color:var(--trace);}
+  .btn-secondary:hover{border-color:var(--trace); background:rgba(61,220,132,.08); transform:translateY(-2px); box-shadow:0 4px 12px rgba(61,220,132,.15);}
+  
+  .btn-ghost{background:transparent; border-color:rgba(61,220,132,.35); color:var(--trace);}
+  .btn-ghost:hover{border-color:var(--trace); background:rgba(61,220,132,.08); transform:translateY(-2px); box-shadow:0 4px 12px rgba(61,220,132,.1);}
+  
+  .btn-icon{padding:9px 10px;}
+
+  .mf-panel .btn:active{transform:translateY(1px) scale(.97);}
+
+  .mf-actions{display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-top:16px;}
+  .mf-progress{display:flex; align-items:center; gap:10px; flex:1; min-width:160px;}
+  .mf-progress-track{flex:1; height:8px; background:#081209; border:1px solid rgba(61,220,132,.25); border-radius:var(--radius); overflow:hidden;}
+  .mf-progress-bar{
+    height:100%; width:0%; background:var(--trace); box-shadow:0 0 8px rgba(61,220,132,.5); transition:width .2s ease;
+    position:relative; overflow:hidden;
+  }
+  .mf-progress-bar.active::after{
+    content:""; position:absolute; inset:0;
+    background:repeating-linear-gradient(-45deg, rgba(6,32,18,.25) 0 6px, transparent 6px 12px);
+    animation:mf-stripe 1s linear infinite;
+  }
+  @keyframes mf-stripe{from{background-position:0 0;} to{background-position:34px 0;}}
+  #mf-progress-label{font-size:11.5px; color:var(--muted); min-width:38px; text-align:right;}
+
+  .mf-console-wrap{margin-top:18px; border:1px solid rgba(61,220,132,.25); border-radius:var(--radius); overflow:hidden; transition:box-shadow .3s ease;}
+  .mf-console-wrap:hover{box-shadow:0 0 20px rgba(61,220,132,.05);}
+  .mf-console-head{
+    display:flex; justify-content:space-between; align-items:center; padding:8px 12px;
+    background:var(--panel-2); border-bottom:1px dashed rgba(61,220,132,.2);
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+  }
+  .mf-console-head .label{display:inline-flex; align-items:center; gap:7px;}
+  .mf-console-head .dot{width:6px; height:6px; border-radius:50%; background:var(--trace); box-shadow:0 0 6px var(--trace); animation:blink 1.6s infinite; flex-shrink:0;}
+  .mf-console-head .dot.busy{background:var(--gold); box-shadow:0 0 6px var(--gold); animation:blink .6s infinite;}
+  .mf-console .ts{color:var(--muted); opacity:.75;}
+  .mf-console .tag{color:var(--gold);}
+  .mf-console{
+    margin:0; background:#050c07; color:var(--trace-dim); font-family:'JetBrains Mono',monospace;
+    font-size:12px; line-height:1.6; padding:14px; height:260px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;
+    position:relative;
+  }
+  .mf-console::before{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
+  }
+  .mf-console > div{animation:mf-line-in .18s ease;}
+  @keyframes mf-line-in{from{opacity:0; transform:translateY(2px);} to{opacity:1; transform:translateY(0);}}
+  @media (prefers-reduced-motion: reduce){
+    .mf-led{animation:none;} .mf-led.on{animation:none;}
+    .mf-progress-bar.active::after{animation:none;} .mf-console > div{animation:none;}
+    .btn, .mf-advanced summary, .mf-adv-grid, .mf-file-row {transition:none !important; animation:none !important;}
+  }
+  .mf-console .ln-err{color:var(--danger);}
+  .mf-console .ln-ok{color:var(--trace);}
+
+  .top-nav{
+    display:flex; gap:4px; align-items:center;
+    padding:16px 0; margin-bottom:4px; position:relative; z-index:2;
+    border-bottom:1px dashed rgba(61,220,132,.18);
+  }
+  .nav-link{
+    background:transparent; border:none; cursor:pointer;
+    font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:.03em;
+    color:var(--muted); padding:8px 14px; border-radius:var(--radius);
+    position:relative; transition:color .15s ease, transform .3s var(--ease-smooth);
+  }
+  .nav-link:hover{color:var(--text); transform:translateY(-1px);}
+  .nav-link.active{color:var(--trace);}
+  .nav-link.active::after{
+    content:""; position:absolute; left:14px; right:14px; bottom:0; height:2px;
+    background:var(--trace); box-shadow:0 0 8px rgba(61,220,132,.5);
+  }
+  
+  .page-view{
+    display:none;
+    opacity:0;
+    transform:translateY(20px) scale(0.96);
+    filter:blur(8px);
+    transition:opacity .45s var(--ease-smooth), transform .45s var(--ease-smooth), filter .45s var(--ease-smooth);
+  }
+  .page-view.active{
+    display:block;
+    opacity:1;
+    transform:translateY(0) scale(1);
+    filter:blur(0);
+    animation:viewReveal .6s var(--ease-smooth);
+  }
+  @keyframes viewReveal{
+    0%{opacity:0; transform:translateY(25px) scale(0.94); filter:blur(10px);}
+    100%{opacity:1; transform:translateY(0) scale(1); filter:blur(0);}
+  }
+  
+  .section-eyebrow{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--muted); margin:40px 0 0; position:relative; overflow:hidden; white-space:nowrap;
+  }
+  .section-eyebrow::after{
+    content:""; position:absolute; left:0; top:50%; width:100%; height:1px;
+    background:linear-gradient(90deg, var(--trace-dim), transparent);
+    transform:translateX(100%);
+    animation:eyebrowScan 3s linear infinite;
+    opacity:.5;
+  }
+  @keyframes eyebrowScan{
+    0%{transform:translateX(100%);}
+    100%{transform:translateX(-100%);}
+  }
+  .section-eyebrow b{color:var(--trace);}
+
+  header{padding:56px 0 44px; border-bottom:1px dashed rgba(61,220,132,.25); position:relative; overflow:hidden;}
+  .hero-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:28px; align-items:center; position:relative; z-index:1;}
+  @media (max-width:760px){ .hero-grid{grid-template-columns:1fr;} .hero-visual{order:-1; max-width:220px; margin:0 auto;} }
+
+  .trace-deco{position:absolute; top:-30px; right:-60px; width:320px; height:320px; opacity:.25; pointer-events:none;}
+  .chip-mark{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em;
+    color:var(--trace); text-transform:uppercase;
+    padding:4px 10px; border:1px solid var(--trace-dim); border-radius:var(--radius);
+    background:rgba(61,220,132,.06); transition:box-shadow .25s ease, transform .3s var(--ease-smooth);
+  }
+  .chip-mark:hover{box-shadow:0 0 14px rgba(61,220,132,.25); transform:translateY(-2px);}
+  .chip-mark .dot{width:6px;height:6px;border-radius:50%;background:var(--trace); box-shadow:0 0 6px var(--trace); animation:blink 1.6s infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+  h1{
+    font-family:'JetBrains Mono',monospace; font-weight:800;
+    font-size:clamp(34px,5.4vw,52px); line-height:1.05;
+    margin:18px 0 10px; letter-spacing:-.01em; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  h1 .brand{display:inline-flex;}
+  h1 .brand .hung{color:#ffffff;}
+  h1 span{color:var(--trace); text-shadow:0 0 18px rgba(61,220,132,.45);}
+  h1 .deco{font-size:1.15em; margin-left:-4px; display:inline-block; line-height:1;}
+  .lead{color:var(--muted); font-size:16px; max-width:52ch; line-height:1.6; margin:0 0 22px;}
+  .boot-line{
+    font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--trace-dim);
+    white-space:pre; overflow:hidden; border-right:2px solid var(--trace);
+    width:0; animation:type 1.6s steps(38,end) forwards, caret .8s step-end infinite;
+  }
+  @keyframes type{to{width:38ch;}}
+  @keyframes caret{50%{border-color:transparent;}}
+  @media (prefers-reduced-motion: reduce){
+    .boot-line{width:38ch; animation:none;}
+    .chip-mark .dot{animation:none;}
+    .card{animation:none !important;}
+  }
+
+  .readout{
+    display:inline-flex; margin-top:8px; border:1px solid rgba(61,220,132,.3); border-radius:var(--radius);
+    background:#081209; box-shadow:inset 0 0 18px rgba(61,220,132,.06); overflow:hidden; flex-wrap:wrap;
+  }
+  .stat{font-family:'JetBrains Mono',monospace; position:relative; padding:10px 18px;}
+  .stat + .stat{border-left:1px dashed rgba(61,220,132,.2);}
+  .stat b{display:block; font-size:20px; color:var(--trace); transition:text-shadow .2s ease; line-height:1.2;}
+  .stat:hover b{text-shadow:0 0 10px rgba(61,220,132,.55);}
+  .stat span{font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em;}
+
+  .hero-visual{position:relative;}
+  .hero-visual svg{width:100%; height:auto; display:block;}
+  .hero-visual .led{animation:blink 1.6s infinite;}
+  @media (prefers-reduced-motion: reduce){
+    .hero-visual .pulse-dot{display:none;}
+    .hero-visual .led{animation:none;}
+  }
+
+  .feature-strip{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:26px; position:relative; z-index:1;
+  }
+  @media (max-width:700px){ .feature-strip{grid-template-columns:1fr;} }
+  .feature{
+    background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
+    padding:16px 16px 18px; position:relative; transition:border-color .3s ease, transform .3s var(--ease-smooth), box-shadow .3s ease;
+  }
+  .feature:hover{border-color:rgba(61,220,132,.4); transform:translateY(-4px); box-shadow:0 8px 20px rgba(0,0,0,.2), 0 0 15px rgba(61,220,132,.05);}
+  .feature-ic{font-size:20px; display:inline-block; margin-bottom:8px; transition:transform .3s var(--ease-smooth);}
+  .feature:hover .feature-ic{transform:scale(1.2) rotate(5deg);}
+  .feature h4{
+    font-family:'JetBrains Mono',monospace; font-size:13px; margin:0 0 6px; color:var(--text);
+    letter-spacing:.02em;
+  }
+  .feature p{margin:0; color:var(--muted); font-size:12.5px; line-height:1.55;}
+  .feature code{color:var(--trace);}
+
+  .compat-banner{
+    display:flex; align-items:flex-start; gap:12px; margin-top:22px;
+    padding:14px 16px; border-radius:var(--radius); font-size:13px; line-height:1.55;
+    transition:box-shadow .3s ease, transform .3s var(--ease-smooth);
+  }
+  .compat-banner.ok{background:rgba(61,220,132,.07); border:1px solid rgba(61,220,132,.3); color:var(--trace);}
+  .compat-banner.ok:hover{box-shadow:0 0 15px rgba(61,220,132,.1); transform:translateY(-2px);}
+  .compat-banner.warn{background:rgba(226,114,91,.08); border:1px solid rgba(226,114,91,.35); color:#f0a892;}
+  .compat-banner.warn:hover{box-shadow:0 0 15px rgba(226,114,91,.1); transform:translateY(-2px);}
+  .compat-banner .ic{font-size:16px; line-height:1;}
+  .compat-banner b{color:var(--text);}
+  .compat-banner a{color:inherit; text-decoration:underline;}
+
+  .guide{
+    margin:18px 0 0; background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
+    overflow:hidden; transition:box-shadow .3s ease;
+  }
+  .guide:hover{box-shadow:0 0 20px rgba(61,220,132,.05);}
+  .guide-tabs{display:flex; border-bottom:1px dashed rgba(61,220,132,.2);}
+  .guide-tab{
+    flex:1; background:transparent; border:none; cursor:pointer; padding:12px 14px;
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.05em; text-transform:uppercase;
+    color:var(--muted); border-bottom:2px solid transparent; transition:color .15s ease, border-color .15s ease, background .3s ease, letter-spacing .3s ease;
+  }
+  .guide-tab.active{color:var(--trace); border-bottom-color:var(--trace); background:rgba(61,220,132,.05);}
+  .guide-tab:hover{color:var(--text); letter-spacing:.1em;}
+  .guide-panel{padding:16px 18px; display:none;}
+  .guide-panel.active{display:block;}
+  .guide-panel ol{margin:0; padding-left:20px; color:var(--muted); font-size:13.5px; line-height:1.8;}
+  .guide-panel li b{color:var(--text); font-weight:600;}
+  .guide-panel li code{color:var(--trace);}
+
+  .controls{
+    display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:14px 0 22px;
+    background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
+    padding:12px; transition:box-shadow .3s ease;
+  }
+  .controls:hover{box-shadow:0 0 20px rgba(61,220,132,.04);}
+  input[type="search"], select{
+    background:#081209; border:1px solid rgba(61,220,132,.25);
+    color:var(--text); font-family:'JetBrains Mono',monospace; font-size:13px;
+    padding:10px 12px; border-radius:var(--radius); outline:none;
+    transition:border-color .2s ease, box-shadow .2s ease, transform .2s var(--ease-smooth);
+  }
+  input[type="search"]{flex:1; min-width:200px;}
+  input[type="search"]::placeholder{color:var(--muted);}
+  input[type="search"]:focus, select:focus{border-color:var(--trace); box-shadow:0 0 10px rgba(61,220,132,.15); transform:translateY(-1px);}
+  select{cursor:pointer; appearance:none; padding-right:26px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%233ddc84'/%3E%3C/svg%3E");
+    background-repeat:no-repeat; background-position:right 10px center;}
+  .tab{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+    background:transparent; border:1px solid rgba(61,220,132,.25); color:var(--muted);
+    padding:9px 12px; border-radius:var(--radius); cursor:pointer; 
+    transition:border-color .15s ease, color .15s ease, transform .2s var(--ease-smooth), box-shadow .2s ease;
+  }
+  .tab.active, .tab:hover{border-color:var(--trace); color:var(--trace); transform:translateY(-2px); box-shadow:0 4px 10px rgba(61,220,132,.1);}
+  .view-toggle{display:flex; border:1px solid rgba(61,220,132,.25); border-radius:var(--radius); overflow:hidden;}
+  .view-toggle button{
+    background:transparent; border:none; color:var(--muted); padding:9px 11px; cursor:pointer;
+    font-family:'JetBrains Mono',monospace; font-size:13px; line-height:1;
+    transition:all .3s var(--ease-smooth);
+  }
+  .view-toggle button.active{background:rgba(61,220,132,.14); color:var(--trace);}
+  .view-toggle button:hover{color:var(--trace);}
+
+  .grid{display:grid; gap:16px; grid-template-columns:1fr;}
+  .grid.cols-2{grid-template-columns:repeat(auto-fill, minmax(360px, 1fr));}
+  @media (max-width:640px){ .grid.cols-2{grid-template-columns:1fr;} }
+
+  .card{
+    position:relative; overflow:hidden;
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border:1px solid rgba(61,220,132,.22);
+    border-radius:var(--radius);
+    padding:20px 22px 18px;
+    opacity:0; transform:translateY(10px);
+    animation:reveal .5s ease forwards;
+    transition:all .3s var(--ease-smooth);
+  }
+  .card:hover{border-color:rgba(61,220,132,.5); transform:translateY(-6px) scale(1.01); box-shadow:0 15px 35px rgba(0,0,0,.4), 0 0 20px rgba(61,220,132,.08);}
+  .card:hover::before, .card:hover::after{opacity:.85;}
+  @keyframes reveal{to{opacity:1; transform:translateY(0);}}
+  .card::before, .card::after{
+    content:""; position:absolute; top:14px; bottom:14px; width:10px;
+    background-image:repeating-linear-gradient(to bottom, var(--gold) 0 4px, transparent 4px 11px);
+    opacity:.55; transition:opacity .3s ease;
+  }
+  .card::before{left:-5px;} .card::after{right:-5px;}
+  .card .hole{position:absolute; width:6px; height:6px; border-radius:50%; border:1px solid var(--trace-dim); opacity:.6; transition:opacity .3s ease;}
+  .card:hover .hole{opacity:1; box-shadow:0 0 5px var(--trace);}
+  .card .hole.tl{top:8px; left:8px;} .card .hole.tr{top:8px; right:8px;}
+  .card .hole.bl{bottom:8px; left:8px;} .card .hole.br{bottom:8px; right:8px;}
+
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;}
+  .card-name{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:18px; margin:0;}
+  .card-badges{display:flex; gap:6px; align-items:center; flex-wrap:wrap;}
+  .badge{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.06em;
+    color:var(--gold); border:1px solid rgba(212,175,55,.4); padding:2px 8px; border-radius:var(--radius);
+    text-transform:uppercase; white-space:nowrap;
+    transition:all .3s var(--ease-smooth);
+  }
+  .card:hover .badge{box-shadow:0 0 10px rgba(212,175,55,.2);}
+  .badge-flashable{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.06em;
+    color:#062012; background:var(--trace); padding:2px 7px; border-radius:var(--radius);
+    text-transform:uppercase; white-space:nowrap; font-weight:700;
+    transition:box-shadow .3s ease;
+  }
+  .card:hover .badge-flashable{box-shadow:0 0 10px rgba(61,220,132,.4);}
+  .card-desc{color:var(--muted); font-size:13.5px; line-height:1.55; margin:10px 0 14px;}
+  .meta-row{display:flex; gap:18px; flex-wrap:wrap; font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted); margin-bottom:16px;}
+  .meta-row b{color:var(--text); font-weight:500;}
+
+  .author-badge{
+    display:inline-flex; align-items:center; gap:5px;
+    font-family:'JetBrains Mono',monospace; font-size:10.5px;
+    color:var(--gold); background:rgba(212,175,55,.08);
+    border:1px solid rgba(212,175,55,.25); padding:2px 8px;
+    border-radius:var(--radius); white-space:nowrap;
+    transition:all .3s ease;
+  }
+  .card:hover .author-badge{
+    border-color:var(--gold); background:rgba(212,175,55,.15);
+    box-shadow:0 0 20px rgba(212,175,55,.08);
+  }
+  .author-badge .at{color:var(--muted); opacity:.6;}
+  .author-badge .name{color:var(--gold);}
+
+  .card-actions{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  .flash-wrap{position:relative; display:inline-flex;}
+  .flash-note{
+    width:100%; margin-top:8px; font-family:'JetBrains Mono',monospace; font-size:11px;
+    color:var(--muted);
+  }
+
+  .skeleton{
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    border:1px solid rgba(61,220,132,.14); border-radius:var(--radius);
+    padding:20px 22px; height:150px; position:relative; overflow:hidden;
+  }
+  .skeleton::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(90deg, transparent, rgba(61,220,132,.07), transparent);
+    animation:shimmer 1.4s infinite;
+  }
+  @keyframes shimmer{0%{transform:translateX(-100%);}100%{transform:translateX(100%);}}
+
+  .empty{
+    text-align:center; padding:60px 20px; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:13px;
+    border:1px dashed rgba(61,220,132,.25); border-radius:var(--radius);
+  }
+  .empty button{margin-top:14px;}
+
+  footer{
+    margin-top:60px; padding-top:24px; border-top:1px dashed rgba(61,220,132,.25);
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);
+  }
+  footer a{color:var(--trace); text-decoration:none;}
+  footer a:hover{text-decoration:underline;}
+
+  .confirm-overlay{
+    position:fixed; inset:0; z-index:100; display:none;
+    align-items:center; justify-content:center; padding:20px;
+    background:rgba(4,8,6,.82); backdrop-filter:blur(6px);
+    opacity:0; transition:opacity .18s ease;
+  }
+  .confirm-overlay.show{display:flex;}
+  .confirm-overlay.visible{opacity:1;}
+
+  .confirm-box{
+    width:min(400px, 100%);
+    background:linear-gradient(165deg, var(--panel-2) 0%, var(--panel) 60%);
+    border-left:3px solid #b6604a;
+    border-radius:var(--radius);
+    padding:26px 26px 22px;
+    text-align:left;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.03),
+      0 30px 70px rgba(0,0,0,.6),
+      0 1px 0 rgba(0,0,0,.4);
+    transform:translateY(6px) scale(.97); transition:transform .18s ease;
+  }
+  .confirm-overlay.visible .confirm-box{transform:translateY(0) scale(1);}
+
+  .confirm-head{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+  .confirm-icwrap svg{width:19px; height:19px; display:block;}
+
+  .confirm-box h3{
+    font-family:'Inter',sans-serif; font-weight:700; font-size:17.5px;
+    margin:0; color:var(--text); letter-spacing:-.01em;
+  }
+  .confirm-box p{
+    color:var(--muted); font-size:13.5px; line-height:1.65; margin:0 0 24px;
+  }
+
+  .confirm-actions{display:flex; gap:10px; justify-content:flex-end;}
+  .confirm-actions .btn{padding:9px 17px;}
+  .confirm-actions .btn-ghost{border-color:rgba(61,220,132,.3); color:var(--muted);}
+  .confirm-actions .btn-ghost:hover{color:var(--trace); border-color:var(--trace);}
+  .confirm-actions .btn-flash{
+    background:#b6604a; border-color:#b6604a; color:#f5ece8; font-weight:600;
+  }
+  .confirm-actions .btn-flash:hover{background:#c67256;}
+
+  .toast-stack{position:fixed; bottom:20px; right:20px; z-index:50; display:flex; flex-direction:column; gap:8px;}
+  .toast{
+    font-family:'JetBrains Mono',monospace; font-size:12.5px;
+    background:var(--panel-2); border:1px solid var(--trace-dim); color:var(--text);
+    padding:10px 14px; border-radius:var(--radius); box-shadow:0 6px 20px rgba(0,0,0,.4);
+    animation:toast-in .25s ease, toast-out .25s ease 1.8s forwards;
+  }
+  @keyframes toast-in{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
+  @keyframes toast-out{to{opacity:0; transform:translateY(8px);}}
+
+  #top-btn{
+    position:fixed; bottom:20px; left:20px; z-index:50;
+    width:38px; height:38px; border-radius:50%;
+    background:var(--panel-2); border:1px solid var(--trace-dim); color:var(--trace);
+    cursor:pointer; display:none; align-items:center; justify-content:center; font-size:16px;
+    transition:all .3s var(--ease-smooth);
+  }
+  #top-btn.show{display:flex;}
+  #top-btn:hover{transform:translateY(-3px); box-shadow:0 5px 15px rgba(61,220,132,.3); background:var(--panel);}
+
+  ::selection{background:var(--trace); color:#062012;}
+
+  .side-rail{
+    position:fixed; top:0; bottom:0; width:140px; z-index:0; pointer-events:none;
+    opacity:.35; display:none;
+  }
+  .side-rail.left{left:0;} .side-rail.right{right:0; transform:scaleX(-1);}
+  @media (min-width:1600px){ .side-rail{display:block;} }
+  @media (prefers-reduced-motion: reduce){ .side-rail .rail-pulse{display:none;} }
+
+  .serial-panel{
+    margin-top: 14px;
+    background:var(--panel); border:1px solid rgba(61,220,132,.16); border-radius:var(--radius);
+    padding:20px 22px 22px; transition:border-color .3s ease, box-shadow .3s ease, transform .3s var(--ease-smooth);
+  }
+  .serial-panel.is-connected{border-color:rgba(61,220,132,.4); box-shadow:0 0 30px rgba(61,220,132,.05); transform:translateY(-2px);}
+  
+  .serial-statusbar{
+    display:flex; align-items:center; gap:10px; margin-bottom:16px; padding-bottom:14px;
+    border-bottom:1px dashed rgba(61,220,132,.16);
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted);
+  }
+  .serial-led{
+    width:8px; height:8px; border-radius:50%; background:#ff0000;
+    box-shadow:0 0 8px rgba(255,0,0,.9), inset 0 0 2px rgba(0,0,0,.3); flex-shrink:0;
+    transition:background .4s ease, box-shadow .4s ease;
+    animation:mf-led-pulse-red 1.4s ease-in-out infinite;
+  }
+  .serial-led.on{
+    background:var(--trace); box-shadow:0 0 8px var(--trace), 0 0 2px var(--trace);
+    animation:mf-led-pulse-green 2s ease-in-out infinite;
+  }
+  
+  .serial-toolbar{
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px;
+  }
+  .serial-baud{
+    margin-left:auto; display:flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);
+  }
+  .serial-baud select{padding:6px 22px 6px 8px; font-size:12px;}
+
+  .serial-console-wrap{
+    margin-top:18px; border:1px solid rgba(61,220,132,.25); border-radius:var(--radius); overflow:hidden;
+    transition:box-shadow .3s ease;
+  }
+  .serial-console-wrap:hover{box-shadow:0 0 20px rgba(61,220,132,.05);}
+  .serial-console-head{
+    display:flex; justify-content:space-between; align-items:center; padding:8px 12px;
+    background:var(--panel-2); border-bottom:1px dashed rgba(61,220,132,.2);
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+  }
+  .serial-console-head .label{display:inline-flex; align-items:center; gap:7px;}
+  .serial-live-dot{
+    width:6px; height:6px; border-radius:50%; background:var(--trace); 
+    box-shadow:0 0 6px var(--trace); animation:blink 1.6s infinite; flex-shrink:0;
+  }
+  .serial-console{
+    margin:0; background:#050c07; color:var(--trace-dim); font-family:'JetBrains Mono',monospace;
+    font-size:12px; line-height:1.6; padding:14px; height:260px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;
+    position:relative;
+  }
+  .serial-console::before{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(rgba(255,255,255,.012) 0 1px, transparent 1px 3px);
+  }
+  .serial-console .ts{color:var(--muted); opacity:.75;}
+  .serial-console .tag{color:var(--gold);}
+  .serial-console .ln-err{color:var(--danger);}
+  .serial-console .ln-ok{color:var(--trace);}
+
+  .serial-send{display:flex; gap:10px; margin-top:14px;}
+  .serial-send input{
+    flex:1; min-width:0; background:#0b1710; color:var(--text);
+    border:1px solid rgba(61,220,132,.22); border-radius:var(--radius);
+    padding:10px 12px; font-family:'JetBrains Mono',monospace; outline:none;
+    transition:border-color .3s ease, box-shadow .3s ease;
+  }
+  .serial-send input:focus{
+    border-color:var(--trace); box-shadow:0 0 0 3px rgba(61,220,132,.06), 0 0 10px rgba(61,220,132,.1);
+  }
+  @media(max-width:650px){
+    .serial-baud{margin-left:0;}
+    .serial-send{flex-direction:column;}
+    .serial-console{min-height:300px;}
+  }
+
+  .nav-link-vip{color:var(--gold);}
+  .nav-link-vip:hover{color:#e7c257;}
+  .nav-link-vip.active{color:var(--gold);}
+  .nav-link-vip.active::after{background:var(--gold); box-shadow:0 0 8px rgba(212,175,55,.6);}
+  .nav-vip-dot{
+    display:inline-block; width:6px; height:6px; border-radius:50%;
+    background:var(--gold); box-shadow:0 0 6px var(--gold); margin-right:7px;
+    animation:blink 1.6s infinite;
+  }
+
+  .vip-hero{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap;
+    padding:24px 0 10px;
+  }
+  .vip-hero h2{
+    font-family:'JetBrains Mono',monospace; font-weight:800; font-size:clamp(24px,3.4vw,32px);
+    margin:10px 0 8px; color:var(--text); letter-spacing:-.01em;
+  }
+  .vip-hero p{color:var(--muted); font-size:13.5px; line-height:1.65; max-width:620px; margin:0;}
+  .vip-badge{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--gold); padding:5px 12px; border:1px solid rgba(212,175,55,.45); border-radius:var(--radius);
+    background:rgba(212,175,55,.07); box-shadow:0 0 15px rgba(212,175,55,.1);
+  }
+  .vip-spec-strip{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin:18px 0 24px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  @media (max-width:760px){ .vip-spec-strip{grid-template-columns:repeat(2,1fr);} }
+  .vip-spec-strip .spec{
+    border:1px solid rgba(212,175,55,.25); border-radius:var(--radius); padding:12px 14px;
+    background:linear-gradient(180deg, var(--panel-2), var(--panel));
+    transition:border-color .2s ease, transform .2s ease;
+  }
+  .vip-spec-strip .spec:hover{border-color:rgba(212,175,55,.5); transform:translateY(-1px);}
+  .vip-spec-strip .spec b{display:block; color:var(--gold); font-size:14px; margin-bottom:3px;}
+  .vip-spec-strip .spec span{color:var(--muted); font-size:11px; letter-spacing:.04em; text-transform:uppercase;}
+
+  .vip-stepper{
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:14px; margin-bottom:22px;
+  }
+  @media(max-width:820px){ .vip-stepper{grid-template-columns:1fr;} }
+  .vip-step-card{
+    background:linear-gradient(170deg, #11281c 0%, #0d1e15 100%);
+    border:1px solid rgba(61,220,132,.18); border-radius:var(--radius);
+    padding:16px 18px; position:relative; overflow:hidden;
+    transition:border-color .25s ease, box-shadow .25s ease;
+  }
+  .vip-step-card.active{border-color:rgba(212,175,55,.5); box-shadow:0 0 25px rgba(212,175,55,.08);}
+  .vip-step-header{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .vip-step-num{
+    width:24px; height:24px; border-radius:50%; background:rgba(212,175,55,.15);
+    border:1px solid var(--gold); color:var(--gold); display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; flex-shrink:0;
+  }
+  .vip-step-title{font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px; color:var(--text);}
+  .vip-step-desc{font-size:12px; line-height:1.55; color:var(--muted); margin:0;}
+
+  .vip-main-card{
+    background:linear-gradient(180deg, #10251a 0%, #0b1c13 100%);
+    border:1px solid rgba(212,175,55,.3); border-radius:var(--radius);
+    padding:22px; margin-bottom:24px; box-shadow:0 8px 32px rgba(0,0,0,.35);
+  }
+  .vip-main-top{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:14px;
+    padding-bottom:18px; border-bottom:1px dashed rgba(212,175,55,.2); margin-bottom:18px;
+  }
+  .vip-chip-label{
+    display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text);
+  }
+  .vip-action-btns{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+
+  .vip-grid-2{
+    display:grid; grid-template-columns:1.2fr 1fr; gap:18px; margin-top:24px;
+  }
+  @media(max-width:880px){ .vip-grid-2{grid-template-columns:1fr;} }
+  .vip-subcard{
+    background:var(--panel); border:1px solid rgba(61,220,132,.18); border-radius:var(--radius);
+    padding:18px 20px;
+  }
+  .vip-subcard h3{
+    font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--gold); margin:0 0 14px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .vip-pin-table{
+    width:100%; border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:12px;
+  }
+  .vip-pin-table th{
+    text-align:left; padding:7px 10px; color:var(--muted); border-bottom:1px solid rgba(61,220,132,.15);
+    font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+  }
+  .vip-pin-table td{padding:8px 10px; border-bottom:1px solid rgba(255,255,255,.04); color:var(--text);}
+  .vip-pin-table tr:last-child td{border-bottom:none;}
+  .vip-pin-badge{
+    display:inline-block; padding:2px 6px; border-radius:2px; font-size:11px; font-weight:700;
+    background:rgba(61,220,132,.12); color:var(--trace); border:1px solid rgba(61,220,132,.3);
+  }
+  .vip-pin-badge.gold{background:rgba(212,175,55,.12); color:var(--gold); border-color:rgba(212,175,55,.35);}
+  .vip-feat-item{
+    display:flex; align-items:flex-start; gap:10px; margin-bottom:12px; font-size:12.5px; color:var(--muted); line-height:1.5;
+  }
+  .vip-feat-item:last-child{margin-bottom:0;}
+  .vip-feat-icon{color:var(--trace); flex-shrink:0; font-size:14px;}
+  .vip-feat-item b{color:var(--text);}
+
+  /* ============================================================
+     VIP FLASH PROGRESS UI
+     ============================================================ */
+  .vip-flash-overlay{
+    position:fixed; inset:0; z-index:130; display:none;
+    align-items:center; justify-content:center; padding:20px;
+    background:rgba(4,8,6,.92); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+    opacity:0; transition:opacity .3s ease;
+  }
+  .vip-flash-overlay.show{display:flex;}
+  .vip-flash-overlay.visible{opacity:1;}
+
+  .vip-flash-box{
+    width:min(520px, 96vw);
+    background:linear-gradient(170deg, #132b1e 0%, #0d1e15 55%, #09150e 100%);
+    border:1px solid rgba(212,175,55,.4); border-radius:3px;
+    padding:26px 26px 22px;
+    box-shadow:0 30px 90px rgba(0,0,0,.8), 0 0 40px rgba(212,175,55,.06);
+    transform:translateY(12px) scale(.96);
+    transition:transform .35s cubic-bezier(.19,1,.22,1);
+    position:relative; overflow:hidden;
+  }
+  .vip-flash-overlay.visible .vip-flash-box{transform:translateY(0) scale(1);}
+
+  .vip-flash-box::before{
+    content:""; position:absolute; left:0; right:0; top:0; height:1px;
+    background:linear-gradient(90deg, transparent, var(--gold), transparent);
+    animation:flashScan 2.4s linear infinite;
+  }
+  @keyframes flashScan{
+    0%{transform:translateX(-100%);}
+    100%{transform:translateX(100%);}
+  }
+
+  .vip-flash-head{
+    display:flex; align-items:center; gap:10px; margin-bottom:18px; padding-bottom:14px;
+    border-bottom:1px solid rgba(212,175,55,.18);
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--gold);
+  }
+  .vip-flash-head .vip-flash-led{
+    width:10px; height:10px; border-radius:50%; background:var(--gold);
+    box-shadow:0 0 12px var(--gold); flex-shrink:0;
+    animation:mf-led-pulse-green 2s ease-in-out infinite;
+  }
+  .vip-flash-head .vip-flash-led.busy{
+    background:var(--trace); box-shadow:0 0 14px var(--trace);
+    animation:blink .5s infinite;
+  }
+  .vip-flash-head .vip-flash-led.error{
+    background:var(--danger); box-shadow:0 0 14px var(--danger);
+    animation:mf-led-pulse-red 1s infinite;
+  }
+  .vip-flash-head .vip-flash-led.done{
+    background:var(--trace); box-shadow:0 0 16px var(--trace);
+    animation:none;
+  }
+  .vip-flash-close{
+    margin-left:auto; background:none; border:none; color:var(--muted); cursor:pointer;
+    font-size:15px; padding:4px 8px; border-radius:2px; transition:all .2s;
+  }
+  .vip-flash-close:hover{color:#fff; background:rgba(255,255,255,.1);}
+
+  .vip-flash-chipinfo{
+    display:flex; align-items:center; gap:12px; margin-bottom:18px;
+    padding:12px 14px; background:#07130c; border:1px solid rgba(61,220,132,.18);
+    border-radius:2px;
+  }
+  .vip-flash-chipinfo .ic{
+    font-size:22px; line-height:1; flex-shrink:0;
+  }
+  .vip-flash-chipinfo .txt{flex:1; min-width:0;}
+  .vip-flash-chipinfo .txt b{
+    display:block; font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--text);
+    margin-bottom:2px;
+  }
+  .vip-flash-chipinfo .txt span{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted);
+    letter-spacing:.04em;
+  }
+
+  .vip-flash-progress-wrap{margin-bottom:18px;}
+  .vip-flash-progress-top{
+    display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px;
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; letter-spacing:.06em;
+    text-transform:uppercase; color:var(--muted);
+  }
+  .vip-flash-progress-top b{
+    color:var(--gold); font-size:16px; font-weight:800;
+    text-shadow:0 0 12px rgba(212,175,55,.3);
+  }
+  .vip-flash-track{
+    position:relative; height:14px; background:#040a06;
+    border:1px solid rgba(212,175,55,.3); border-radius:2px; overflow:hidden;
+    box-shadow:inset 0 0 12px rgba(0,0,0,.6);
+  }
+  .vip-flash-bar{
+    height:100%; width:0%; position:relative;
+    background:linear-gradient(90deg, var(--trace-dim), var(--trace) 40%, var(--gold) 100%);
+    box-shadow:0 0 16px rgba(61,220,132,.5);
+    transition:width .25s cubic-bezier(.19,1,.22,1);
+  }
+  .vip-flash-bar::after{
+    content:""; position:absolute; inset:0;
+    background:repeating-linear-gradient(-45deg,
+      rgba(255,255,255,.15) 0 6px, transparent 6px 12px);
+    animation:mf-stripe 1s linear infinite;
+  }
+  .vip-flash-bar.done{
+    background:linear-gradient(90deg, var(--trace), #4be996);
+    box-shadow:0 0 24px rgba(61,220,132,.7);
+  }
+  .vip-flash-bar.done::after{display:none;}
+  .vip-flash-bar.error{
+    background:linear-gradient(90deg, var(--danger), #f08874);
+    box-shadow:0 0 16px rgba(226,114,91,.5);
+  }
+
+  .vip-flash-led-row{
+    display:flex; gap:3px; margin-top:10px; justify-content:center;
+  }
+  .vip-flash-led-row i{
+    width:6px; height:6px; border-radius:50%; background:#1a2a20;
+    transition:background .3s ease, box-shadow .3s ease;
+  }
+  .vip-flash-led-row i.on{
+    background:var(--trace); box-shadow:0 0 6px var(--trace);
+  }
+  .vip-flash-led-row i.current{
+    background:var(--gold); box-shadow:0 0 10px var(--gold);
+    animation:blink .6s infinite;
+  }
+
+  .vip-flash-msg{
+    font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.55;
+    color:var(--muted); text-align:center; min-height:34px;
+    padding:10px 12px; background:#040a06; border:1px dashed rgba(61,220,132,.18);
+    border-radius:2px; margin-bottom:14px;
+    transition:color .3s ease, border-color .3s ease;
+  }
+  .vip-flash-msg.ok{color:var(--trace); border-color:rgba(61,220,132,.4);}
+  .vip-flash-msg.err{color:var(--danger); border-color:rgba(226,114,91,.4);}
+
+  .vip-flash-actions{
+    display:flex; gap:10px; justify-content:flex-end;
+  }
+  .vip-flash-actions .btn{min-width:110px; justify-content:center;}
+
+  @media (prefers-reduced-motion: reduce){
+    .vip-flash-box::before{animation:none;}
+    .vip-flash-bar::after{animation:none;}
+    .vip-flash-led-row i.current{animation:none;}
+  }
+
+  /* ============================================================
+     VIP ACTIVATE MODAL
+     ============================================================ */
+  .vip-activate-overlay{
+    position:fixed; inset:0; z-index:120; display:none;
+    align-items:center; justify-content:center; padding:20px;
+    background:rgba(4,8,6,.88); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    opacity:0; transition:opacity .25s ease;
+  }
+  .vip-activate-overlay.show{display:flex;}
+  .vip-activate-overlay.visible{opacity:1;}
+  .vip-activate-box{
+    width:min(580px, 96vw); max-height:92vh; overflow-y:auto;
+    background:linear-gradient(175deg, #132b1e 0%, #0d1e15 50%, #09150e 100%);
+    border:1px solid rgba(212,175,55,.45); border-radius:var(--radius);
+    padding:24px 24px 22px; box-shadow:0 25px 80px rgba(0,0,0,.75), 0 0 35px rgba(212,175,55,.08);
+    transform:translateY(10px) scale(.97); transition:transform .25s var(--ease-smooth);
+  }
+  .vip-activate-overlay.visible .vip-activate-box{transform:translateY(0) scale(1);}
+
+  .vip-activate-head{
+    display:flex; align-items:center; gap:10px; margin-bottom:16px; padding-bottom:12px;
+    border-bottom:1px solid rgba(212,175,55,.2);
+    font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--gold);
+  }
+  .vip-activate-led{
+    width:9px; height:9px; border-radius:50%; background:#ff3333; flex-shrink:0;
+    box-shadow:0 0 10px rgba(255,50,50,.9); animation:mf-led-pulse-red 1.4s ease-in-out infinite;
+  }
+  .vip-activate-led.on{background:var(--trace); box-shadow:0 0 10px var(--trace); animation:mf-led-pulse-green 2s ease-in-out infinite;}
+  .vip-activate-close{
+    margin-left:auto; background:none; border:none; color:var(--muted); cursor:pointer;
+    font-size:16px; padding:4px 8px; border-radius:2px; transition:color .2s, background .2s;
+  }
+  .vip-activate-close:hover{color:#fff; background:rgba(255,255,255,.1);}
+
+  .vip-activate-toolbar{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:16px;
+    background:#08140c; border:1px solid rgba(61,220,132,.16); border-radius:var(--radius); padding:10px 14px;
+  }
+  .vip-toolbar-actions{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap:8px;
+  flex:1;
+  min-width:0;
+}
+.vip-toolbar-actions .btn{
+  justify-content:center;
+  min-width:0;
+  width:100%;
+  font-size:11.5px;         /* nhỏ hơn 1 chút để chữ vừa */
+  padding:8px 10px;         /* padding vừa phải */
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  letter-spacing:0;         /* bỏ letter-spacing giúp chữ vừa hơn */
+}
+@media (max-width:640px){
+  .vip-toolbar-actions{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+  .vip-port-state{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--muted);}
+
+  .vip-mac-banner{
+    background:linear-gradient(180deg, #0d1e15 0%, #07130c 100%);
+    border:1px solid rgba(212,175,55,.35); border-radius:var(--radius);
+    padding:16px 18px; margin-bottom:16px; position:relative;
+    box-shadow:inset 0 0 20px rgba(212,175,55,.03);
+  }
+  .vip-mac-top{
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;
+  }
+  .vip-mac-title{
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+  }
+  .vip-mac-status-tag{
+    font-family:'JetBrains Mono',monospace; font-size:10px; text-transform:uppercase; letter-spacing:.05em;
+    padding:2px 6px; border-radius:2px;
+  }
+  .vip-mac-status-tag.waiting{background:rgba(127,156,140,.15); color:var(--muted); border:1px solid rgba(127,156,140,.3);}
+  .vip-mac-status-tag.detected{background:rgba(61,220,132,.15); color:var(--trace); border:1px solid rgba(61,220,132,.4);}
+
+  .vip-mac-value-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  .vip-mac-value{
+    font-family:'JetBrains Mono',monospace; font-size:clamp(20px, 4vw, 24px); font-weight:800;
+    color:var(--gold); letter-spacing:.08em; text-shadow:0 0 16px rgba(212,175,55,.3);
+    transition:text-shadow .3s ease;
+  }
+  .vip-mac-value.pending{color:#4d6155; text-shadow:none; font-weight:500; font-size:16px;}
+  .vip-mac-btns{display:flex; align-items:center; gap:8px;}
+
+  .vip-license-status{
+    display:flex; align-items:center; gap:10px; padding:10px 14px; margin-bottom:16px;
+    border-radius:var(--radius); font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:600;
+  }
+  .vip-license-status.unknown{
+    background:#0a1710; border:1px dashed rgba(127,156,140,.3); color:var(--muted);
+  }
+  .vip-license-status.unactivated{
+    background:rgba(212,175,55,.1); border:1px solid rgba(212,175,55,.4); color:var(--gold);
+  }
+  .vip-license-status.active{
+    background:rgba(61,220,132,.12); border:1px solid rgba(61,220,132,.5); color:var(--trace);
+    box-shadow:0 0 20px rgba(61,220,132,.1);
+  }
+  .vip-license-status.invalid{
+    background:rgba(226,114,91,.12); border:1px solid rgba(226,114,91,.5); color:var(--danger);
+  }
+  .vip-license-icon{font-size:15px; flex-shrink:0;}
+
+  .vip-key-section{margin-bottom:16px;}
+  .vip-key-label{
+    display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:11px;
+    letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-bottom:6px;
+  }
+  .vip-key-counter{color:var(--gold); transition:color .25s ease;}
+  .vip-activate-keyrow{display:flex; gap:8px; margin-bottom:8px;}
+  .vip-activate-keyrow input{flex:1; min-width:0;}
+  .key-input{
+    background:#07120a; color:var(--gold);
+    border:1px solid rgba(212,175,55,.4); border-radius:var(--radius);
+    padding:11px 14px; font-family:'JetBrains Mono',monospace; font-size:12.5px;
+    letter-spacing:.04em; outline:none;
+    transition:border-color .25s ease, box-shadow .25s ease;
+    word-break:break-all;
+    line-height:1.5;
+  }
+  .key-input::placeholder{color:#3d5045; letter-spacing:.02em; text-transform:none;}
+  .key-input:focus{border-color:var(--gold); box-shadow:0 0 0 3px rgba(212,175,55,.12), 0 0 15px rgba(212,175,55,.2);}
+  .vip-key-shortcuts{
+    display:flex; gap:6px; flex-wrap:wrap;
+  }
+  .btn-micro{
+    padding:3px 8px; font-size:10.5px; font-family:'JetBrains Mono',monospace;
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); color:var(--muted);
+    border-radius:var(--radius); cursor:pointer; transition:all .18s ease;
+  }
+  .btn-micro:hover{background:rgba(61,220,132,.12); border-color:var(--trace); color:var(--trace);}
+
+  .vip-tiktok-box{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    background:linear-gradient(90deg, rgba(212,175,55,.08) 0%, rgba(61,220,132,.04) 100%);
+    border:1px solid rgba(212,175,55,.3); border-radius:var(--radius);
+    padding:12px 14px; margin-bottom:16px;
+  }
+  .vip-tiktok-info{display:flex; align-items:center; gap:10px;}
+  .vip-tiktok-icon{
+    width:30px; height:30px; border-radius:6px; background:#000; display:flex; align-items:center; justify-content:center;
+    color:#fff; flex-shrink:0; border:1px solid rgba(255,255,255,.2);
+  }
+  .vip-tiktok-text{font-size:12px; line-height:1.4;}
+  .vip-tiktok-text b{display:block; color:var(--gold); font-family:'JetBrains Mono',monospace; font-size:12.5px;}
+  .vip-tiktok-text span{color:var(--muted); font-size:11px;}
+
+  .vip-smart-log-wrap{
+    background:#040a06; border:1px solid rgba(61,220,132,.2); border-radius:var(--radius);
+    padding:12px; margin-bottom:10px;
+  }
+  .vip-smart-log-head{
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;
+    font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:.05em; color:var(--muted);
+  }
+  .vip-smart-feed{
+    height:150px; overflow-y:auto; font-family:'JetBrains Mono',monospace; font-size:11.5px;
+    line-height:1.65; display:flex; flex-direction:column; gap:4px;
+  }
+  .smart-row{display:flex; align-items:flex-start; gap:8px; animation:feedIn .2s ease;}
+  @keyframes feedIn{from{opacity:0; transform:translateY(2px);} to{opacity:1; transform:translateY(0);}}
+  .smart-ts{color:#4a6555; flex-shrink:0; font-size:10.5px;}
+  .smart-tag{
+    display:inline-block; padding:1px 5px; border-radius:2px; font-size:10px; font-weight:700; flex-shrink:0;
+  }
+  .smart-tag.sys{background:rgba(52,152,219,.15); color:#5dade2; border:1px solid rgba(52,152,219,.3);}
+  .smart-tag.mac{background:rgba(212,175,55,.15); color:var(--gold); border:1px solid rgba(212,175,55,.4);}
+  .smart-tag.ok{background:rgba(61,220,132,.18); color:var(--trace); border:1px solid rgba(61,220,132,.45);}
+  .smart-tag.warn{background:rgba(230,126,34,.15); color:#f39c12; border:1px solid rgba(230,126,34,.35);}
+  .smart-tag.err{background:rgba(231,76,60,.18); color:#e74c3c; border:1px solid rgba(231,76,60,.4);}
+  .smart-tag.cmd{background:rgba(155,89,182,.15); color:#bb8fce; border:1px solid rgba(155,89,182,.3);}
+  .smart-msg{color:var(--text); word-break:break-word;}
+
+  .vip-raw-details summary{
+    cursor:pointer; list-style:none; font-family:'JetBrains Mono',monospace; font-size:11px;
+    letter-spacing:.05em; color:var(--muted); padding:4px 0; user-select:none;
+  }
+  .vip-raw-details summary::-webkit-details-marker{display:none;}
+  .vip-raw-details summary::before{content:"▸ "; color:var(--trace-dim);}
+  .vip-raw-details[open] summary::before{content:"▾ ";}
+  .vip-raw-details summary:hover{color:var(--trace);}
+  .vip-activate-console{
+    margin:8px 0 0; background:#020503; color:#5b7c6a; font-family:'JetBrains Mono',monospace;
+    font-size:11px; line-height:1.5; padding:10px; height:120px; overflow-y:auto; white-space:pre-wrap; word-break:break-word;
+    border:1px solid rgba(61,220,132,.15); border-radius:var(--radius);
+  }
+  /* ====== Toggle "Erase trước khi flash" ====== */
+.vip-flash-erase{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:10px 14px;
+  margin-bottom:14px;
+  background:#07130c;
+  border:1px solid rgba(212,175,55,.25);
+  border-radius:2px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  color:var(--muted);
+  cursor:pointer;
+  transition:border-color .2s ease, background .2s ease;
+  user-select:none;
+}
+.vip-flash-erase:hover{
+  border-color:rgba(212,175,55,.5);
+  background:#0a1a10;
+}
+.vip-flash-erase-label{display:flex; align-items:center; gap:8px;}
+.vip-flash-erase-label .ic{font-size:14px;}
+.vip-flash-erase-label b{color:var(--text); font-weight:600;}
+.vip-flash-erase-label span{display:block; font-size:10.5px; color:#5a7a68; margin-top:2px;}
+
+.vip-switch{
+  position:relative;
+  width:42px;
+  height:22px;
+  background:#0a1a10;
+  border:1px solid rgba(212,175,55,.35);
+  border-radius:11px;
+  flex-shrink:0;
+  transition:background .25s ease, border-color .25s ease;
+}
+.vip-switch::after{
+  content:"";
+  position:absolute;
+  top:2px;
+  left:2px;
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:#5a7a68;
+  transition:transform .25s cubic-bezier(.19,1,.22,1), background .25s ease;
+}
+input[type="checkbox"].vip-switch-input{display:none;}
+input[type="checkbox"].vip-switch-input:checked + .vip-switch{
+  background:rgba(226,114,91,.15);
+  border-color:var(--danger);
+}
+input[type="checkbox"].vip-switch-input:checked + .vip-switch::after{
+  transform:translateX(20px);
+  background:var(--danger);
+  box-shadow:0 0 8px rgba(226,114,91,.6);
+}
+ 
+</style>
+</head>
+<body>
+<svg class="side-rail left" viewBox="0 0 140 800" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0 60 H60 V160 H30 V300 H70 V460 H20 V620 H60 V800" fill="none" stroke="#1c4d33" stroke-width="1.5"/>
+  <circle cx="60" cy="60" r="3" fill="#3ddc84"/>
+  <circle cx="30" cy="300" r="3" fill="#d4af37"/>
+  <circle cx="70" cy="460" r="3" fill="#3ddc84"/>
+  <circle cx="20" cy="620" r="3" fill="#d4af37"/>
+  <circle r="3" fill="#3ddc84" class="rail-pulse">
+    <animateMotion dur="6s" repeatCount="indefinite" path="M0 60 H60 V160 H30 V300 H70 V460 H20 V620 H60 V800"/>
+  </circle>
+</svg>
+<svg class="side-rail right" viewBox="0 0 140 800" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0 120 H50 V260 H80 V420 H40 V560 H90 V800" fill="none" stroke="#1c4d33" stroke-width="1.5"/>
+  <circle cx="50" cy="120" r="3" fill="#d4af37"/>
+  <circle cx="80" cy="260" r="3" fill="#3ddc84"/>
+  <circle cx="40" cy="560" r="3" fill="#d4af37"/>
+  <circle r="3" fill="#3ddc84" class="rail-pulse">
+    <animateMotion dur="7s" repeatCount="indefinite" path="M0 120 H50 V260 H80 V420 H40 V560 H90 V800"/>
+  </circle>
+</svg>
+<div class="wrap">
+
+  <nav class="top-nav" aria-label="Điều hướng chính">
+    <button class="nav-link active" data-view="info">Giới thiệu</button>
+    <button class="nav-link" data-view="firmware">Firmware</button>
+    <button class="nav-link" data-view="manual">Web Flasher</button>
+    <button class="nav-link nav-link-vip" data-view="tvbgone"><span class="nav-vip-dot"></span>TV B Gone</button>
+    <button class="nav-link" data-view="serial">Serial Monitor</button>
+  </nav>
+
+  <section id="view-info" class="page-view active">
+
+  <header>
+    <div class="hero-grid">
+      <div class="hero-text">
+        <span class="chip-mark"><span class="dot"></span>ESP32 · FIRMWARE HUB</span>
+        <h1><span class="brand"><span class="hung">hung</span><span>tesp</span></span><span class="deco">🎄</span></h1>
+        <p class="boot-line">&gt; loading firmware_index.json ...</p>
+        <p class="lead">Firmware do mình tự build cho các board ESP32 — cắm USB, bấm nút, flash thẳng ngay trên trình duyệt. Không cần cài esptool hay phần mềm gì thêm.</p>
+
+        <div class="readout">
+          <div class="stat"><b id="stat-count">0</b><span>Firmware</span></div>
+          <div class="stat"><b id="stat-boards">0</b><span>Board target</span></div>
+          <div class="stat"><b id="stat-size">—</b><span>Tổng dung lượng</span></div>
+          <div class="stat"><b id="stat-updated">—</b><span>Cập nhật</span></div>
+        </div>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <svg viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 40 H120 V90" stroke="#1c4d33" stroke-width="1.5"/>
+          <path d="M280 60 H190 V90" stroke="#1c4d33" stroke-width="1.5"/>
+          <path d="M20 260 H100 V210" stroke="#1c4d33" stroke-width="1.5"/>
+          <path d="M280 240 H200 V210" stroke="#1c4d33" stroke-width="1.5"/>
+          <circle cx="20" cy="40" r="3.5" fill="#d4af37"/>
+          <circle cx="280" cy="60" r="3.5" fill="#d4af37"/>
+          <circle cx="20" cy="260" r="3.5" fill="#d4af37"/>
+          <circle cx="280" cy="240" r="3.5" fill="#d4af37"/>
+
+          <rect x="90" y="90" width="120" height="120" rx="6" fill="#0f2317" stroke="#3ddc84" stroke-width="2"/>
+          <rect x="100" y="100" width="100" height="100" rx="3" fill="none" stroke="#1c4d33" stroke-width="1" stroke-dasharray="3 4"/>
+          <text x="150" y="146" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#3ddc84" font-weight="700">ESP32</text>
+          <text x="150" y="160" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#3ddc84" font-weight="700">-S3</text>
+          <circle cx="150" cy="180" r="3" fill="#d4af37" class="led"/>
+
+          <g stroke="#d4af37" stroke-width="2">
+            <line x1="108" y1="90" x2="108" y2="76"/><line x1="126" y1="90" x2="126" y2="76"/>
+            <line x1="150" y1="90" x2="150" y2="76"/><line x1="174" y1="90" x2="174" y2="76"/>
+            <line x1="192" y1="90" x2="192" y2="76"/>
+            <line x1="108" y1="210" x2="108" y2="224"/><line x1="126" y1="210" x2="126" y2="224"/>
+            <line x1="150" y1="210" x2="150" y2="224"/><line x1="174" y1="210" x2="174" y2="224"/>
+            <line x1="192" y1="210" x2="192" y2="224"/>
+            <line x1="90" y1="108" x2="76" y2="108"/><line x1="90" y1="126" x2="76" y2="126"/>
+            <line x1="90" y1="150" x2="76" y2="150"/><line x1="90" y1="174" x2="76" y2="174"/>
+            <line x1="90" y1="192" x2="76" y2="192"/>
+            <line x1="210" y1="108" x2="224" y2="108"/><line x1="210" y1="126" x2="224" y2="126"/>
+            <line x1="210" y1="150" x2="224" y2="150"/><line x1="210" y1="174" x2="224" y2="174"/>
+            <line x1="210" y1="192" x2="224" y2="192"/>
+          </g>
+
+          <path id="pulsePath" d="M120 76 V40 H20" stroke="#3ddc84" stroke-width="1.2" opacity=".5"/>
+          <circle r="3.5" fill="#3ddc84" class="pulse-dot">
+            <animateMotion dur="2.8s" repeatCount="indefinite" path="M120 76 V40 H20"/>
+          </circle>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <section class="feature-strip">
+    <div class="feature">
+      <span class="feature-ic">⚡</span>
+      <h4>Flash trực tiếp qua Web</h4>
+      <p>Không cần cài driver hay tool ngoài — trình duyệt tự nói chuyện với board qua chuẩn Web Serial.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-ic">🗂️</span>
+      <h4>Firmware tự build</h4>
+      <p>Mỗi bản đều build thủ công từ source, ghi rõ version, ngày build và dung lượng thật.</p>
+    </div>
+    <div class="feature">
+      <span class="feature-ic">🔓</span>
+      <h4>Tải về dùng tự do</h4>
+      <p>Không cần đăng nhập, không quảng cáo. Tải file <code>.bin</code> hoặc flash thẳng, tuỳ bạn.</p>
+    </div>
+  </section>
+
+  <div class="guide">
+    <div class="guide-tabs">
+      <button class="guide-tab active" data-guide="web">Cách flash qua Web</button>
+    </div>
+    <div class="guide-panel active" id="guide-web">
+      <ol>
+        <li>Cắm board ESP32 vào máy tính bằng cáp USB (loại có truyền data, không phải cáp sạc).</li>
+        <li>Mở trang này bằng <b>Google Chrome</b> hoặc <b>Microsoft Edge</b> trên máy tính.</li>
+        <li>Bấm nút <b>Flash qua USB</b> trên firmware muốn cài, chọn đúng cổng COM khi trình duyệt hỏi.</li>
+        <li>Đợi quá trình xoá và ghi firmware chạy xong — không rút cáp trong lúc này.</li>
+      </ol>
+    </div>
+  </div>
+
+  </section>
+
+  <section id="view-firmware" class="page-view">
+
+  <div id="compat-banner"></div>
+
+  <p class="section-eyebrow">// DANH SÁCH FIRMWARE</p>
+  <section class="controls">
+    <input type="search" id="search" placeholder="Tìm theo tên, board, mô tả... (vd: LoRa, 6-button, bruce)">
+    <select id="sort">
+      <option value="new">Mới nhất</option>
+      <option value="old">Cũ nhất</option>
+      <option value="name">Tên A → Z</option>
+      <option value="size">Dung lượng</option>
+    </select>
+    <button class="tab active" data-filter="all">Tất cả</button>
+    <span id="board-tabs"></span>
+    <div class="view-toggle" role="group" aria-label="Chế độ xem">
+      <button id="view-grid" class="active" aria-label="Xem dạng lưới" title="Lưới">▦</button>
+      <button id="view-list" aria-label="Xem dạng danh sách" title="Danh sách">☰</button>
+    </div>
+  </section>
+
+  <main class="grid" id="grid">
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </main>
+
+  </section>
+
+  <section id="view-manual" class="page-view">
+
+  <p class="section-eyebrow">// WEB FLASHER — NÂNG CAO</p>
+  <div id="manual-compat-banner"></div>
+
+  <div class="mf-panel" id="mf-panel">
+    <div class="mf-statusbar">
+      <span class="mf-led" id="mf-led"></span>
+      <span id="mf-status-text">Chưa kết nối</span>
+    </div>
+    <div class="mf-toolbar">
+      <button id="mf-connect" class="btn btn-primary">Kết nối thiết bị</button>
+      <button id="mf-disconnect" class="btn btn-ghost" style="display:none">Ngắt kết nối</button>
+      <span id="mf-chip-badge" class="badge" style="display:none"></span>
+      <label class="mf-checkbox mf-baud-inline">
+        Baud
+        <select id="mf-baud">
+          <option value="115200">115200</option>
+          <option value="230400">230400</option>
+          <option value="460800" selected>460800</option>
+          <option value="921600">921600</option>
+        </select>
+      </label>
+    </div>
+
+    <p class="mf-hint">Chọn 1 hoặc nhiều file <code>.bin</code>, mỗi file ghi vào một địa chỉ (offset) riêng.</p>
+
+    <div class="mf-files" id="mf-files">
+      <div class="mf-file-row" data-row>
+        <input type="file" accept=".bin,.bin.gz,application/octet-stream" class="mf-file-input">
+        <input type="text" class="mf-addr-input mono" value="0x0" spellcheck="false">
+        <button class="btn btn-ghost btn-icon mf-remove-row" type="button" title="Xoá dòng">✕</button>
+      </div>
+    </div>
+    <button id="mf-add-file" class="btn btn-ghost" type="button">+ Thêm file ở địa chỉ khác</button>
+
+    <details class="mf-advanced">
+      <summary>Tuỳ chọn nâng cao</summary>
+      <div class="mf-adv-grid">
+        <label>Flash mode
+          <select id="mf-mode">
+            <option value="keep" selected>Giữ nguyên (keep)</option>
+            <option value="qio">qio</option>
+            <option value="qout">qout</option>
+            <option value="dio">dio</option>
+            <option value="dout">dout</option>
+          </select>
+        </label>
+        <label>Flash frequency
+          <select id="mf-freq">
+            <option value="keep" selected>Giữ nguyên (keep)</option>
+            <option value="80m">80MHz</option>
+            <option value="40m">40MHz</option>
+            <option value="26m">26MHz</option>
+            <option value="20m">20MHz</option>
+          </select>
+        </label>
+        <label>Flash size
+          <select id="mf-size">
+            <option value="keep" selected>Giữ nguyên (keep)</option>
+            <option value="1MB">1MB</option>
+            <option value="2MB">2MB</option>
+            <option value="4MB">4MB</option>
+            <option value="8MB">8MB</option>
+            <option value="16MB">16MB</option>
+            <option value="32MB">32MB</option>
+          </select>
+        </label>
+        <label class="mf-checkbox"><input type="checkbox" id="mf-erase"> Xoá toàn bộ flash trước khi ghi</label>
+        <label class="mf-checkbox"><input type="checkbox" id="mf-compress" checked> Nén dữ liệu khi truyền (nhanh hơn)</label>
+        <label class="mf-checkbox"><input type="checkbox" id="mf-reset" checked> Reset board sau khi flash xong</label>
+      </div>
+    </details>
+
+    <div class="mf-actions">
+      <button id="mf-flash" class="btn btn-flash" disabled>Bắt đầu Flash</button>
+      <button id="mf-erase-only" class="btn btn-secondary" disabled>Erase Flash</button>
+      <div class="mf-progress" id="mf-progress" style="display:none">
+        <div class="mf-progress-track"><div class="mf-progress-bar" id="mf-progress-bar"></div></div>
+        <span id="mf-progress-label" class="mono">0%</span>
+      </div>
+    </div>
+
+    <div class="mf-console-wrap">
+      <div class="mf-console-head">
+        <span class="label"><span class="dot"></span>CONSOLE_OUTPUT</span>
+        <button id="mf-console-clear" class="btn btn-ghost btn-icon" type="button" title="Xoá log">🗑</button>
+      </div>
+      <pre class="mf-console" id="mf-console"></pre>
+    </div>
+  </div>
+
+  </section>
+
+  <section id="view-tvbgone" class="page-view">
+
+    <div class="vip-hero">
+      <div>
+        <span class="vip-badge">★ VIP TV-B-GONE PRO · ESP32-C3 SUPER MINI</span>
+        <h2>TV B Gone — hungtesp Edition (v2.0)</h2>
+        <p>Firmware đa năng tích hợp TV-B-Gone tắt TV mọi hãng, Thu chép ir, NRF Jammer & IR Messenger.</p>
+      </div>
+    </div>
+
+    <div class="vip-spec-strip">
+      <div class="spec"><b>ESP32-C3</b><span>Super Mini (RISC-V)</span></div>
+      <div class="spec"><b>v2.0.0</b><span>Build 16/09/2026</span></div>
+      <div class="spec"><b>710 KB</b><span>Dung lượng ROM</span></div>
+      <div class="spec"><b>NVS Auth</b><span>Lưu key vĩnh viễn</span></div>
+    </div>
+
+    <div class="vip-stepper">
+      <div class="vip-step-card active">
+        <div class="vip-step-header">
+          <span class="vip-step-num">1</span>
+          <span class="vip-step-title">Nạp Firmware</span>
+        </div>
+        <p class="vip-step-desc">Cắm ESP32-C3 qua USB, bấm "Flash qua USB". Mẹo: nếu máy tính không nhận cổng COM, giữ nút <b>BOOT</b> khi cắm cáp.</p>
+      </div>
+      <div class="vip-step-card active">
+        <div class="vip-step-header">
+          <span class="vip-step-num">2</span>
+          <span class="vip-step-title">Lấy MAC & Gửi TikTok</span>
+        </div>
+        <p class="vip-step-desc">Flash xong bảng kích hoạt sẽ <b>tự động bật lên</b> và lấy ngay mã MAC. Bấm nút copy để gửi cho shop cấp key.</p>
+      </div>
+      <div class="vip-step-card active">
+        <div class="vip-step-header">
+          <span class="vip-step-num">3</span>
+          <span class="vip-step-title">Nhập Key & Hoàn Tất</span>
+        </div>
+        <p class="vip-step-desc">Dán mã key (tối đa 140 ký tự hex) nhận từ shop vào ô và bấm Kích hoạt. Thiết bị tự lưu vào bộ nhớ NVS vĩnh viễn.</p>
+      </div>
+    </div>
+
+    <div id="vip-flash-compat"></div>
+    <div class="vip-main-card">
+      <div class="vip-main-top">
+        <div class="vip-chip-label">
+          <span class="mf-led on"></span>
+          <span>TvBGoneVipHungTesp.bin · ESP32-C3 Super Mini</span>
+        </div>
+        <div id="vip-page-license-tag" class="vip-mac-status-tag waiting">Sẵn sàng nạp</div>
+      </div>
+      <div class="vip-action-btns" id="vip-flash-slot">
+        <a class="btn btn-secondary" href="firmware/TvBGoneVipHungTesp.bin" download>Tải firmware (.bin)</a>
+        <button id="vip-open-activate" class="btn btn-flash" type="button">🔑 Mở Bảng Kích Hoạt VIP & Lấy MAC</button>
+      </div>
+    </div>
+
+    <div class="vip-grid-2">
+      <div class="vip-subcard">
+        <h3>⚡ Sơ đồ đấu nối chân (Pinout ESP32-C3 Super Mini)</h3>
+        <table class="vip-pin-table">
+          <thead>
+            <tr>
+              <th>Chức năng</th>
+              <th>Chân GPIO</th>
+              <th>Ghi chú</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mắt phát hồng ngoại (IR TX)</td>
+              <td><span class="vip-pin-badge gold">GPIO 4</span></td>
+              <td>Phát tín hiệu TV-B-Gone & Jammer</td>
+            </tr>
+            <tr>
+              <td>Mắt thu hồng ngoại (IR RX)</td>
+              <td><span class="vip-pin-badge">GPIO 3</span></td>
+              <td>Học lệnh & nhận tin nhắn IR</td>
+            </tr>
+            <tr>
+              <td>Màn hình OLED I2C (SDA)</td>
+              <td><span class="vip-pin-badge">GPIO 8</span></td>
+              <td>SSD1306 0.96 inch 128x64</td>
+            </tr>
+            <tr>
+              <td>Màn hình OLED I2C (SCL)</td>
+              <td><span class="vip-pin-badge">GPIO 9</span></td>
+              <td>SSD1306 0.96 inch 128x64</td>
+            </tr>
+            <tr>
+              <td>Nút bấm UP (Lên)</td>
+              <td><span class="vip-pin-badge">GPIO 5</span></td>
+              <td>Nút bấm kéo trở nội</td>
+            </tr>
+            <tr>
+              <td>Nút bấm DOWN (Xuống)</td>
+              <td><span class="vip-pin-badge">GPIO 6</span></td>
+              <td>Nút bấm kéo trở nội</td>
+            </tr>
+            <tr>
+              <td>Nút bấm OK (Chọn / Giữ)</td>
+              <td><span class="vip-pin-badge gold">GPIO 7</span></td>
+              <td>Giữ để thoát chế độ phát</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="vip-subcard">
+        <h3>🌟 Tính Năng Nổi Bật Bản VIP</h3>
+        <div class="vip-feat-item">
+          <span class="vip-feat-icon">📺</span>
+          <div><b>TV-B-Gone Xuyên Hãng:</b> Tích hợp đầy đủ mã NA, EU, Universal, hỗ trợ tắt hầu như toàn bộ TV phổ biến hiện nay.</div>
+        </div>
+        <div class="vip-feat-item">
+          <span class="vip-feat-icon">📡</span>
+          <div><b>NRF24 Jammer & Spectrum:</b> Tích hợp giao diện quét phổ tần số 2.4GHz và phát xung nhiễu kiểm thử bảo mật.</div>
+        </div>
+        <div class="vip-feat-item">
+          <span class="vip-feat-icon">💬</span>
+          <div><b>IR Messenger:</b> Gửi và nhận tin nhắn văn bản bí mật không dây qua mắt hồng ngoại giữa 2 board.</div>
+        </div>
+  
+      </div>
+    </div>
+
+  </section>
+
+  <!-- MODAL FLASH TIẾN TRÌNH VIP -->
+  <div class="vip-flash-overlay" id="vip-flash-overlay">
+    <div class="vip-flash-box" role="dialog" aria-modal="true" aria-label="Đang nạp firmware">
+      
+      <div class="vip-flash-head">
+        <span class="vip-flash-led" id="vip-flash-led"></span>
+        <span id="vip-flash-title">ĐANG NẠP FIRMWARE</span>
+        <button class="vip-flash-close" id="vip-flash-close" type="button" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="vip-flash-chipinfo">
+        <span class="ic" id="vip-flash-chip-ic">🔌</span>
+        <div class="txt">
+          <b id="vip-flash-chip-name">ESP32-C3 · TvBGoneVipHungTesp.bin</b>
+          <span id="vip-flash-chip-detail">Đang chờ kết nối thiết bị...</span>
+        </div>
+      </div>
+
+      <div class="vip-flash-progress-wrap">
+        <div class="vip-flash-progress-top">
+          <span>TIẾN TRÌNH NẠP</span>
+          <b id="vip-flash-pct">0%</b>
+        </div>
+        <div class="vip-flash-track">
+          <div class="vip-flash-bar" id="vip-flash-bar"></div>
+        </div>
+        <div class="vip-flash-led-row" id="vip-flash-leds"></div>
+      </div>
+
+      <div class="vip-flash-msg" id="vip-flash-msg">
+        Sẵn sàng. Bấm "Bắt đầu nạp" để tiến hành.
+      </div>
+    <label class="vip-flash-erase" for="vip-flash-erase">
+        <div class="vip-flash-erase-label">
+          <span class="ic">⚠️</span>
+          <div>
+            <b>Xoá toàn bộ flash trước khi ghi</b>
+            <span>Erase chip → xoá hết dữ liệu cũ (chậm hơn, an toàn hơn)</span>
+          </div>
+        </div>
+        <input type="checkbox" id="vip-flash-erase" class="vip-switch-input">
+        <span class="vip-switch"></span>
+      </label>
+      <div class="vip-flash-actions">
+        <button class="btn btn-ghost" id="vip-flash-cancel" type="button">Huỷ</button>
+        <button class="btn btn-flash" id="vip-flash-start" type="button">⚡ Bắt đầu nạp</button>
+        <button class="btn btn-primary" id="vip-flash-done" type="button" style="display:none">✓ Hoàn tất</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL POPUP KÍCH HOẠT VIP -->
+  <div class="vip-activate-overlay" id="vip-activate-overlay">
+    <div class="vip-activate-box" role="dialog" aria-modal="true" aria-label="Kích hoạt TV B Gone">
+      
+      <div class="vip-activate-head">
+        <span class="vip-activate-led" id="vip-act-led"></span>
+        <span id="vip-act-title">XÁC THỰC BẢN QUYỀN TV-B-GONE VIP</span>
+        <button class="vip-activate-close" id="vip-activate-close" type="button" aria-label="Đóng">✕</button>
+      </div>
+
+      <div class="vip-activate-toolbar">
+        <div class="vip-toolbar-actions">
+          <button id="vip-act-connect" class="btn btn-primary" type="button">🔌 Kết nối Serial</button>
+          <button id="vip-act-disconnect" class="btn btn-ghost" type="button" style="display:none">Ngắt kết nối</button>
+          <button id="vip-act-recheck-mac" class="btn btn-ghost" type="button" title="Gửi lệnh đọc lại MAC" disabled>🔄 Đọc lại MAC</button>
+          <button id="vip-act-reset-chip" class="btn btn-ghost" type="button" title="Gửi lệnh reboot firmware" disabled>⟲ Reboot chip</button>
+        </div>
+        <span class="vip-port-state mono" id="vip-act-status">Chưa kết nối</span>
+      </div>
+
+      <div class="vip-mac-banner">
+        <div class="vip-mac-top">
+          <span class="vip-mac-title">Mã MAC Chip (ESP32-C3 Super Mini)</span>
+          <span class="vip-mac-status-tag waiting" id="vip-mac-status-tag">Chưa kết nối</span>
+        </div>
+        <div class="vip-mac-value-row">
+          <div class="vip-mac-value mono pending" id="vip-act-mac">— chưa phát hiện —</div>
+          <div class="vip-mac-btns">
+            <button id="vip-act-mac-copy" class="btn btn-ghost" type="button" title="Sao chép mã MAC" disabled>📋 Copy MAC</button>
+            <button id="vip-act-tiktok-msg" class="btn btn-secondary" type="button" title="Copy sẵn tin nhắn gửi TikTok" disabled>💬 Copy gửi TikTok</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="vip-license-status unknown" id="vip-act-license">
+        <span class="vip-license-icon" id="vip-act-license-icon">⚪</span>
+        <span id="vip-act-license-text">Chưa kết nối — Vui lòng bấm "Kết nối Serial" để kiểm tra bản quyền.</span>
+      </div>
+
+      <div class="vip-key-section">
+        <div class="vip-key-label">
+          <span>Nhập Key Kích Hoạt (tối đa 140 ký tự Hex)</span>
+          <span class="vip-key-counter mono" id="vip-key-counter">0/140 HEX</span>
+        </div>
+        <div class="vip-activate-keyrow">
+          <input type="text" id="vip-act-key" class="key-input mono" placeholder="Dán key được cung cấp..." autocomplete="off" spellcheck="false" maxlength="160">
+          <button id="vip-act-send" class="btn btn-flash" type="button" disabled>⚡ Kích hoạt ngay</button>
+        </div>
+        <div class="vip-key-shortcuts">
+          <button id="vip-act-check" class="btn-micro" type="button" disabled>🔍 Kiểm tra key (check)</button>
+          <button id="vip-act-reset-key" class="btn-micro" type="button" disabled>🗑 Xóa key (reset)</button>
+          <button id="vip-act-help" class="btn-micro" type="button" disabled>❓ Danh sách lệnh</button>
+        </div>
+      </div>
+
+      <div class="vip-tiktok-box">
+        <div class="vip-tiktok-info">
+          <div class="vip-tiktok-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M16.6 5.82c-1.02-.88-1.6-2.16-1.6-3.62h-3.02v13.6c0 1.5-1.22 2.72-2.72 2.72a2.72 2.72 0 0 1 0-5.44c.28 0 .55.04.8.12V9.98a5.74 5.74 0 0 0-.8-.06 5.74 5.74 0 1 0 5.74 5.74V8.98a8.6 8.6 0 0 0 5.02 1.6V7.56c-1.24 0-2.4-.4-3.42-1.24-.15-.14-.28-.29-.4-.5z"/></svg>
+          </div>
+          <div class="vip-tiktok-text">
+            <b>TikTok: @hungesp32bw16</b>
+            <span>Gửi mã MAC ở trên qua TikTok để nhận key kích hoạt siêu tốc</span>
+          </div>
+        </div>
+        <a class="btn btn-ghost" href="https://www.tiktok.com/@hungesp32bw16" target="_blank" rel="noopener">Mở TikTok →</a>
+      </div>
+
+      <div class="vip-smart-log-wrap">
+        <div class="vip-smart-log-head">
+          <span>// NHẬT KÝ HỆ THỐNG (SMART SYSTEM LOG)</span>
+          <div style="display:flex; gap:6px;">
+            <button id="vip-smart-copy" class="btn-micro" type="button" title="Copy log">📋 Copy</button>
+            <button id="vip-smart-clear" class="btn-micro" type="button" title="Xoá log">🗑 Xoá</button>
+          </div>
+        </div>
+        <div class="vip-smart-feed" id="vip-act-smart-feed">
+          <div class="smart-row">
+            <span class="smart-ts">00:00:00</span>
+            <span class="smart-tag sys">HỆ THỐNG</span>
+            <span class="smart-msg">Sẵn sàng. Hãy kết nối board để tự động nhận diện mã MAC và trạng thái bản quyền.</span>
+          </div>
+        </div>
+      </div>
+
+      <details class="vip-raw-details">
+        <summary>Xem log Serial kỹ thuật (Raw Output)</summary>
+        <pre class="vip-activate-console" id="vip-act-console"></pre>
+      </details>
+
+    </div>
+  </div>
+
+
+  <section id="view-serial" class="page-view">
+    <p class="section-eyebrow">// SERIAL MONITOR — REALTIME LOG</p>
+    <div id="serial-compat-banner"></div>
+
+    <div class="serial-panel" id="serial-panel">
+      <div class="serial-statusbar">
+        <span id="sm-led" class="serial-led"></span>
+        <span id="sm-info">Chưa kết nối</span>
+      </div>
+
+      <div class="serial-toolbar">
+        <button id="sm-connect" class="btn btn-primary">Kết nối Serial</button>
+        <button id="sm-disconnect" class="btn btn-ghost" style="display:none">Ngắt kết nối</button>
+        <span id="sm-status" class="badge">DISCONNECTED</span>
+
+        <label class="serial-baud">
+          Baud
+          <select id="sm-baud">
+            <option value="9600">9600</option>
+            <option value="74880">74880</option>
+            <option value="115200" selected>115200</option>
+            <option value="230400">230400</option>
+            <option value="460800">460800</option>
+            <option value="921600">921600</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="serial-console-wrap">
+        <div class="serial-console-head">
+          <span class="label"><span class="serial-live-dot"></span>LIVE_SERIAL_OUTPUT</span>
+          <div class="serial-actions">
+            <button id="sm-copy" class="btn btn-ghost btn-icon" type="button" title="Copy log">📋</button>
+            <button id="sm-clear" class="btn btn-ghost btn-icon" type="button" title="Xoá log">🗑</button>
+            <button id="sm-reset" class="btn btn-ghost btn-icon" type="button" title="Reset board">⟲</button>
+          </div>
+        </div>
+        <div id="sm-console" class="serial-console"></div>
+      </div>
+
+      <div class="serial-send">
+        <input id="sm-input" type="text" placeholder="Gửi dữ liệu xuống ESP32...">
+        <button id="sm-send" class="btn btn-secondary" disabled>Gửi</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>© <span id="year"></span> hungtesp · LMH.DEV</span>
+    <span>
+      Build từ <a href="https://github.com/hungtesp" target="_blank" rel="noopener">github.com/hungtesp</a> ·
+      <a href="https://github.com/hungtesp/hungesp32bw16/issues" target="_blank" rel="noopener">Báo lỗi / góp ý</a> ·
+      chỉnh sửa <code>firmware.json</code> để thêm bản mới.
+    </span>
+  </footer>
+
+</div>
+
+<button id="top-btn" title="Lên đầu trang">↑</button>
+<div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="confirm-head">
+      <span class="confirm-icwrap">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 3.5L22 20.5H2L12 3.5Z" stroke="#c67256" stroke-width="1.6" stroke-linejoin="round"/>
+          <line x1="12" y1="9.5" x2="12" y2="14.5" stroke="#c67256" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="12" cy="17.3" r="1" fill="#c67256"/>
+        </svg>
+      </span>
+      <h3 id="confirm-title">Erase Flash</h3>
+    </div>
+    <p id="confirm-msg">Xoá toàn bộ flash trên board? Thao tác không thể hoàn tác.</p>
+    <div class="confirm-actions">
+      <button id="confirm-cancel" class="btn btn-ghost">Huỷ</button>
+      <button id="confirm-ok" class="btn btn-flash">Erase</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('year').textContent = new Date().getFullYear();
+
+// ---- top nav ----
+document.querySelectorAll('.nav-link').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-' + btn.dataset.view).classList.add('active');
+    window.scrollTo({top:0, behavior:'smooth'});
+  });
+});
+
+// ---- Web Serial support check ----
+const canFlashInBrowser = 'serial' in navigator && window.isSecureContext;
+(function renderCompatBanner(){
+  const el = document.getElementById('compat-banner');
+  if(canFlashInBrowser){
+    el.innerHTML = `<div class="compat-banner ok"><span class="ic">✓</span><div><b>Trình duyệt này hỗ trợ flash trực tiếp.</b> Cắm board qua USB và bấm "Flash qua USB" trên firmware bạn muốn cài — không cần cài thêm phần mềm nào.</div></div>`;
+  }else{
+    el.innerHTML = `<div class="compat-banner warn"><span class="ic">⚠</span><div><b>Trình duyệt hoặc thiết bị này chưa hỗ trợ flash qua web.</b> Tính năng dùng chuẩn Web Serial, hiện chỉ chạy trên <b>Chrome</b> hoặc <b>Edge trên máy tính</b> (không hỗ trợ Firefox, Safari, hoặc điện thoại). Bạn vẫn có thể bấm "Tải firmware" và nạp bằng esptool hoặc công cụ flash khác.</div></div>`;
+  }
+})();
+
+// ---- guide tabs ----
+document.querySelectorAll('.guide-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.guide-tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.guide-panel').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('guide-' + t.dataset.guide).classList.add('active');
+  });
+});
+
+const grid = document.getElementById('grid');
+const searchEl = document.getElementById('search');
+const sortEl = document.getElementById('sort');
+const tabsEl = document.getElementById('board-tabs');
+const toastStack = document.getElementById('toast-stack');
+const topBtn = document.getElementById('top-btn');
+let ALL = [];
+let activeBoard = 'all';
+let viewMode = 'grid';
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function toast(msg){
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  toastStack.appendChild(el);
+  setTimeout(() => el.remove(), 2100);
+}
+
+// ---- themed confirm modal ----
+const confirmOverlay = document.getElementById('confirm-overlay');
+const confirmBoxTitle = document.getElementById('confirm-title');
+const confirmBoxMsg = document.getElementById('confirm-msg');
+const confirmOkBtn = document.getElementById('confirm-ok');
+const confirmCancelBtn = document.getElementById('confirm-cancel');
+let confirmResolver = null;
+
+function customConfirm(message, { title = 'Xác nhận', okLabel = 'OK' } = {}){
+  confirmBoxTitle.textContent = title;
+  confirmBoxMsg.textContent = message;
+  confirmOkBtn.textContent = okLabel;
+  confirmOverlay.classList.add('show');
+  requestAnimationFrame(() => confirmOverlay.classList.add('visible'));
+  return new Promise(resolve => { confirmResolver = resolve; });
+}
+function closeConfirm(result){
+  confirmOverlay.classList.remove('visible');
+  setTimeout(() => confirmOverlay.classList.remove('show'), 180);
+  if(confirmResolver){ confirmResolver(result); confirmResolver = null; }
+}
+confirmOkBtn.addEventListener('click', () => closeConfirm(true));
+confirmCancelBtn.addEventListener('click', () => closeConfirm(false));
+confirmOverlay.addEventListener('click', (e) => { if(e.target === confirmOverlay) closeConfirm(false); });
+document.addEventListener('keydown', (e) => { if(e.key === 'Escape' && confirmOverlay.classList.contains('show')) closeConfirm(false); });
+
+function parseSizeMB(sizeStr){
+  if(!sizeStr) return 0;
+  const m = String(sizeStr).match(/([\d.]+)\s*(KB|MB|GB)?/i);
+  if(!m) return 0;
+  const num = parseFloat(m[1]);
+  const unit = (m[2] || 'MB').toUpperCase();
+  if(unit === 'GB') return num * 1024;
+  if(unit === 'KB') return num / 1024;
+  return num;
+}
+
+function chipFamily(board){
+  const b = (board || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if(b.includes('S3')) return 'ESP32-S3';
+  if(b.includes('C3')) return 'ESP32-C3';
+  if(b.includes('C6')) return 'ESP32-C6';
+  if(b.includes('S2')) return 'ESP32-S2';
+  if(b.includes('8266')) return 'ESP8266';
+  return 'ESP32';
+}
+
+function buildManifestUrl(item){
+  const fileUrl = new URL(`firmware/${item.file}`, window.location.href).href;
+  const manifest = {
+    name: item.name,
+    version: item.version || '1.0.0',
+    builds: [{ chipFamily: chipFamily(item.board), parts: [{ path: fileUrl, offset: 0 }] }]
+  };
+  return URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/json' }));
+}
+
+function sortItems(items){
+  const arr = [...items];
+  switch(sortEl.value){
+    case 'old': return arr.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    case 'name': return arr.sort((a,b) => (a.name||'').localeCompare(b.name||''));
+    case 'size': return arr.sort((a,b) => parseSizeMB(b.size) - parseSizeMB(a.size));
+    default: return arr.sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  }
+}
+
+function render(){
+  const q = searchEl.value.trim().toLowerCase();
+  let items = ALL.filter(it => {
+    const matchesBoard = activeBoard === 'all' || it.board === activeBoard;
+    const hay = `${it.name} ${it.board} ${it.description||''} ${it.version||''} ${it.author||''}`.toLowerCase();
+    const matchesQuery = !q || hay.includes(q);
+    return matchesBoard && matchesQuery;
+  });
+  items = sortItems(items);
+
+  grid.classList.toggle('cols-2', viewMode === 'grid');
+
+  if(!items.length){
+    grid.innerHTML = `<div class="empty">&gt; không tìm thấy firmware nào khớp truy vấn.<br><button class="btn btn-ghost" id="reset-filters">Xoá bộ lọc</button></div>`;
+    document.getElementById('reset-filters')?.addEventListener('click', () => {
+      searchEl.value = ''; activeBoard = 'all';
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.filter === 'all'));
+      render();
+    });
+    return;
+  }
+
+  grid.innerHTML = items.map((it, idx) => `
+    <article class="card" style="animation-delay:${Math.min(idx,8) * 40}ms">
+      <span class="hole tl"></span><span class="hole tr"></span><span class="hole bl"></span><span class="hole br"></span>
+      <div class="card-top">
+        <h3 class="card-name">${esc(it.name)}</h3>
+        <div class="card-badges">
+          ${canFlashInBrowser ? '<span class="badge-flashable">Flash Web</span>' : ''}
+          <span class="badge">${esc(it.board || 'ESP32-S3')}</span>
+          ${it.author ? `<span class="author-badge"><span class="at">@</span><span class="name">${esc(it.author)}</span></span>` : ''}
+        </div>
+      </div>
+      <p class="card-desc">${esc(it.description || '')}</p>
+      <div class="meta-row">
+        <span><b>v${esc(it.version || '—')}</b></span>
+        <span>Ngày: <b>${esc(it.date || '—')}</b></span>
+        <span>Dung lượng: <b>${esc(it.size || '—')}</b></span>
+      </div>
+      <div class="card-actions" data-idx="${idx}">
+        ${canFlashInBrowser ? `<span class="flash-wrap" data-flash-slot="${idx}"></span>` : ''}
+        <a class="btn ${canFlashInBrowser ? 'btn-secondary' : 'btn-primary'}" href="firmware/${encodeURIComponent(it.file)}" download>Tải firmware</a>
+        <button class="btn btn-ghost btn-icon" data-link="firmware/${esc(it.file)}" title="Copy link tải trực tiếp">🔗</button>
+        ${!canFlashInBrowser ? `<span class="flash-note">Flash qua web cần Chrome/Edge trên máy tính.</span>` : ''}
+      </div>
+    </article>
+  `).join('');
+
+  if(canFlashInBrowser){
+    items.forEach((it, idx) => {
+      const slot = grid.querySelector(`[data-flash-slot="${idx}"]`);
+      if(!slot) return;
+      const installBtn = document.createElement('esp-web-install-button');
+      installBtn.setAttribute('manifest', buildManifestUrl(it));
+      const trigger = document.createElement('button');
+      trigger.className = 'btn btn-flash';
+      trigger.type = 'button';
+      trigger.innerHTML = 'Flash qua USB';
+      trigger.setAttribute('slot', 'activate');
+      installBtn.appendChild(trigger);
+      slot.appendChild(installBtn);
+    });
+  }
+
+  grid.querySelectorAll('[data-link]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const url = new URL(btn.dataset.link, window.location.href).href;
+      try{ await navigator.clipboard.writeText(url); toast('✓ Đã copy link tải'); }
+      catch(e){ toast('Không copy được — trình duyệt chặn clipboard'); }
+    });
+  });
+}
+
+function buildTabs(){
+  const boards = [...new Set(ALL.map(i => i.board).filter(Boolean))];
+  tabsEl.innerHTML = boards.map(b => `<button class="tab" data-filter="${esc(b)}">${esc(b)}</button>`).join('');
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      activeBoard = t.dataset.filter;
+      render();
+    });
+  });
+}
+
+function updateStats(){
+  document.getElementById('stat-count').textContent = ALL.length;
+  document.getElementById('stat-boards').textContent = new Set(ALL.map(i => i.board)).size;
+  const totalMB = ALL.reduce((sum, i) => sum + parseSizeMB(i.size), 0);
+  document.getElementById('stat-size').textContent = totalMB ? `${totalMB.toFixed(1)} MB` : '—';
+  const dates = ALL.map(i => i.date).filter(Boolean).sort();
+  document.getElementById('stat-updated').textContent = dates.length ? dates[dates.length-1] : '—';
+}
+fetch('firmware.json')
+  .then(r => { if(!r.ok) throw new Error('http ' + r.status); return r.json(); })
+  .then(data => {
+    ALL = Array.isArray(data) ? data : [];
+    buildTabs();
+    updateStats();
+    render();
+
+    window.dispatchEvent(new CustomEvent('firmware-loaded', { detail: ALL }));
+  })
+  .catch(() => {
+    grid.innerHTML = `<div class="empty">&gt; lỗi: không đọc được firmware.json.<br>Kiểm tra file có tồn tại ở gốc repo và đúng định dạng JSON.<br><button class="btn btn-ghost" id="retry-fetch">Thử lại</button></div>`;
+    document.getElementById('retry-fetch')?.addEventListener('click', () => location.reload());
+  });
+searchEl.addEventListener('input', render);
+sortEl.addEventListener('change', render);
+
+document.getElementById('view-grid').addEventListener('click', () => {
+  viewMode = 'grid';
+  document.getElementById('view-grid').classList.add('active');
+  document.getElementById('view-list').classList.remove('active');
+  render();
+});
+document.getElementById('view-list').addEventListener('click', () => {
+  viewMode = 'list';
+  document.getElementById('view-list').classList.add('active');
+  document.getElementById('view-grid').classList.remove('active');
+  render();
+});
+
+window.addEventListener('scroll', () => {
+  topBtn.classList.toggle('show', window.scrollY > 400);
+});
+topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}));
+
+// =====================================================================
+// TAB "TỰ FLASH FILE .BIN" — dùng esptool-js
+// =====================================================================
+(function manualFlashTab(){
+  const manualBanner = document.getElementById('manual-compat-banner');
+  if(canFlashInBrowser){
+    manualBanner.innerHTML = `<div class="compat-banner ok"><span class="ic">✓</span><div><b>Trình duyệt này hỗ trợ Web Serial.</b> Bạn có thể kết nối thẳng board và tự chọn file .bin để flash với đầy đủ tuỳ chọn nâng cao bên dưới.</div></div>`;
+  }else{
+    manualBanner.innerHTML = `<div class="compat-banner warn"><span class="ic">⚠</span><div><b>Trình duyệt hoặc thiết bị này chưa hỗ trợ Web Serial.</b> Dùng <b>Chrome</b> hoặc <b>Edge trên máy tính</b> để dùng được tab này.</div></div>`;
+    return;
+  }
+
+  const $ = (id) => document.getElementById(id);
+  const filesWrap = $('mf-files');
+  const addFileBtn = $('mf-add-file');
+  const connectBtn = $('mf-connect');
+  const disconnectBtn = $('mf-disconnect');
+  const chipBadge = $('mf-chip-badge');
+  const flashBtn = $('mf-flash');
+  const eraseOnlyBtn = $('mf-erase-only');
+  const progressWrap = $('mf-progress');
+  const progressBar = $('mf-progress-bar');
+  const progressLabel = $('mf-progress-label');
+  const consoleEl = $('mf-console');
+  const consoleClearBtn = $('mf-console-clear');
+  const consoleDot = document.querySelector('.mf-console-head .dot');
+  const baudSel = $('mf-baud');
+  const mfPanel = $('mf-panel');
+  const mfLed = $('mf-led');
+  const mfStatusText = $('mf-status-text');
+
+  let esploaderMod = null;
+  let transport = null;
+  let esploader = null;
+  let connected = false;
+  let currentPort = null;
+
+  navigator.serial.addEventListener('disconnect', (event) => {
+    if(currentPort && event.target === currentPort){
+      log('Thiết bị đã bị rút hoặc mất kết nối.', 'ln-err');
+      toast('⚠ Đã mất kết nối thiết bị');
+      esploader = null; transport = null; currentPort = null;
+      setDisconnectedUI();
+    }
+  });
+
+  function timestamp(){
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+  function log(msg, cls){
+    const line = document.createElement('div');
+    if(cls) line.className = cls;
+    const ts = document.createElement('span');
+    ts.className = 'ts';
+    ts.textContent = `[${timestamp()}] `;
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = '[ESP] ';
+    line.appendChild(ts);
+    line.appendChild(tag);
+    line.appendChild(document.createTextNode(String(msg).replace(/^>\s*/, '')));
+    consoleEl.appendChild(line);
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+  }
+  log('Sẵn sàng. Bấm "Kết nối thiết bị" để bắt đầu...');
+  const terminal = {
+    clean(){ consoleEl.innerHTML = ''; },
+    writeLine(data){ log(String(data)); },
+    write(data){ log(String(data)); },
+  };
+
+  consoleClearBtn.addEventListener('click', () => { consoleEl.innerHTML = ''; log('Đã xoá log.'); });
+
+  function wireFileRow(row){
+    const fileInput = row.querySelector('.mf-file-input');
+    fileInput.addEventListener('change', () => {
+      row.classList.toggle('has-file', fileInput.files.length > 0);
+    });
+  }
+
+  function addFileRow(){
+    const row = document.createElement('div');
+    row.className = 'mf-file-row';
+    row.setAttribute('data-row','');
+    row.innerHTML = `
+      <input type="file" accept=".bin,.bin.gz,application/octet-stream" class="mf-file-input">
+      <input type="text" class="mf-addr-input mono" value="0x0" spellcheck="false">
+      <button class="btn btn-ghost btn-icon mf-remove-row" type="button" title="Xoá dòng">✕</button>
+    `;
+    row.style.animation = 'none';
+    row.offsetHeight;
+    row.style.animation = '';
+    
+    filesWrap.appendChild(row);
+    wireFileRow(row);
+    row.querySelector('.mf-remove-row').addEventListener('click', () => {
+      if(filesWrap.children.length > 1) row.remove();
+      else toast('Cần ít nhất 1 file');
+    });
+  }
+  filesWrap.querySelectorAll('.mf-file-row').forEach(wireFileRow);
+  filesWrap.querySelectorAll('.mf-remove-row').forEach(b => {
+    b.addEventListener('click', () => {
+      if(filesWrap.children.length > 1) b.closest('.mf-file-row').remove();
+      else toast('Cần ít nhất 1 file');
+    });
+  });
+  addFileBtn.addEventListener('click', addFileRow);
+
+  function parseAddress(str){
+    const v = String(str).trim();
+    const n = v.toLowerCase().startsWith('0x') ? parseInt(v, 16) : parseInt(v, 10);
+    return Number.isFinite(n) ? n : NaN;
+  }
+
+  async function loadLib(){
+    if(!esploaderMod){
+      log('> đang tải esptool-js từ CDN...');
+      esploaderMod = await import('https://unpkg.com/esptool-js/bundle.js');
+    }
+    return esploaderMod;
+  }
+
+  function setConnectedUI(chipName){
+    connected = true;
+    connectBtn.style.display = 'none';
+    disconnectBtn.style.display = '';
+    chipBadge.style.display = '';
+    chipBadge.textContent = chipName || 'Đã kết nối';
+    chipBadge.classList.add('pop');
+    setTimeout(() => chipBadge.classList.remove('pop'), 300);
+    flashBtn.disabled = false;
+    eraseOnlyBtn.disabled = false;
+    mfLed.classList.add('on');
+    mfStatusText.textContent = 'Đã kết nối · ' + (chipName || '');
+    mfPanel.classList.add('is-connected');
+  }
+  function setDisconnectedUI(){
+    connected = false;
+    connectBtn.style.display = '';
+    disconnectBtn.style.display = 'none';
+    chipBadge.style.display = 'none';
+    flashBtn.disabled = true;
+    eraseOnlyBtn.disabled = true;
+    mfLed.classList.remove('on');
+    mfStatusText.textContent = 'Chưa kết nối';
+    mfPanel.classList.remove('is-connected');
+  }
+
+  connectBtn.addEventListener('click', async () => {
+    try{
+      connectBtn.disabled = true;
+      let port;
+      try{
+        port = await navigator.serial.requestPort();
+      }catch(pickErr){
+        connectBtn.disabled = false;
+        if(pickErr && pickErr.name === 'NotFoundError'){
+          log('> đã huỷ chọn cổng COM.');
+        }else{
+          log('> không thể mở hộp thoại chọn cổng: ' + (pickErr && pickErr.message ? pickErr.message : pickErr), 'ln-err');
+          toast('Không mở được hộp thoại chọn cổng COM');
+        }
+        return;
+      }
+      const { ESPLoader, Transport } = await loadLib();
+      transport = new Transport(port, true);
+      currentPort = port;
+      esploader = new ESPLoader({
+        transport,
+        baudrate: parseInt(baudSel.value, 10),
+        terminal,
+        debugLogging: false,
+      });
+      log('> đang kết nối và nhận diện chip...');
+      const chipName = await esploader.main();
+      log(`> đã kết nối: ${chipName}`, 'ln-ok');
+      setConnectedUI(chipName);
+      toast('✓ Đã kết nối ' + chipName);
+    }catch(err){
+      log('> lỗi kết nối: ' + (err && err.message ? err.message : err), 'ln-err');
+      toast('Không kết nối được thiết bị');
+      esploader = null; transport = null; currentPort = null;
+    }finally{
+      connectBtn.disabled = false;
+    }
+  });
+
+  disconnectBtn.addEventListener('click', async () => {
+    try{ if(transport) await transport.disconnect(); }catch(e){}
+    esploader = null; transport = null; currentPort = null;
+    setDisconnectedUI();
+    log('> đã ngắt kết nối.');
+  });
+
+  eraseOnlyBtn.addEventListener('click', async () => {
+    if(!esploader) return;
+    const ok = await customConfirm('Xoá toàn bộ flash trên board? Thao tác không thể hoàn tác.', { title: 'Erase Flash', okLabel: 'Erase' });
+    if(!ok) return;
+    try{
+      eraseOnlyBtn.disabled = true;
+      consoleDot?.classList.add('busy');
+      log('> đang xoá toàn bộ flash...');
+      await esploader.eraseFlash();
+      log('> xoá flash hoàn tất.', 'ln-ok');
+      toast('✓ Đã xoá flash');
+    }catch(err){
+      log('> lỗi khi xoá flash: ' + (err && err.message ? err.message : err), 'ln-err');
+      toast('Xoá flash thất bại');
+    }finally{
+      eraseOnlyBtn.disabled = false;
+      consoleDot?.classList.remove('busy');
+    }
+  });
+
+  flashBtn.addEventListener('click', async () => {
+    if(!esploader) return;
+    const rows = [...filesWrap.querySelectorAll('.mf-file-row')];
+    const fileArray = [];
+    for(const row of rows){
+      const fileInput = row.querySelector('.mf-file-input');
+      const addrInput = row.querySelector('.mf-addr-input');
+      const file = fileInput.files[0];
+      if(!file){ toast('Có dòng chưa chọn file'); return; }
+      const address = parseAddress(addrInput.value);
+      if(Number.isNaN(address)){ toast('Địa chỉ không hợp lệ: ' + addrInput.value); return; }
+      const data = new Uint8Array(await file.arrayBuffer());
+      fileArray.push({ data, address, name: file.name });
+    }
+    if(!fileArray.length){ toast('Chưa có file nào để flash'); return; }
+
+    const flashMode = $('mf-mode').value;
+    const flashFreq = $('mf-freq').value;
+    const flashSize = $('mf-size').value;
+    const eraseAll = $('mf-erase').checked;
+    const compress = $('mf-compress').checked;
+    const doReset = $('mf-reset').checked;
+
+    flashBtn.disabled = true; eraseOnlyBtn.disabled = true;
+    progressWrap.style.display = 'flex';
+    progressBar.style.width = '0%'; progressLabel.textContent = '0%';
+    progressBar.classList.add('active');
+    consoleDot?.classList.add('busy');
+    log(`> bắt đầu flash ${fileArray.length} file...`);
+
+    try{
+      await esploader.writeFlash({
+        fileArray: fileArray.map(f => ({ data: f.data, address: f.address })),
+        flashMode, flashFreq, flashSize,
+        eraseAll, compress,
+        reportProgress: (fileIndex, written, total) => {
+          const pct = total ? Math.round((written / total) * 100) : 0;
+          progressBar.style.width = pct + '%';
+          progressLabel.textContent = `File ${fileIndex + 1}/${fileArray.length} · ${pct}%`;
+        },
+      });
+      log('> ghi flash hoàn tất, đã xác minh dữ liệu.', 'ln-ok');
+      if(doReset){
+        await esploader.after('hard_reset');
+        log('> đã reset board.');
+      }
+      toast('✓ Flash thành công');
+    }catch(err){
+      log('> lỗi khi flash: ' + (err && err.message ? err.message : err), 'ln-err');
+      toast('Flash thất bại — xem console bên dưới');
+    }finally{
+      flashBtn.disabled = false; eraseOnlyBtn.disabled = false;
+      progressBar.classList.remove('active');
+      consoleDot?.classList.remove('busy');
+    }
+  });
+})();
+
+
+// =====================================================================
+// TAB "TV B GONE" — flash VIP + kích hoạt key
+// Đọc config từ firmware.json (match theo name chứa "TV B Gone")
+// =====================================================================
+(function tvBGoneTab(){
+  // ====== CONFIG MẶC ĐỊNH (fallback nếu JSON lỗi) ======
+  let TVBGONE_FILE = 'TvBGoneV2HungTesp.bin';
+  let TVBGONE_OFFSET = 0x0;
+  let TVBGONE_BOARD = 'ESP32-C3';
+
+  const compat = document.getElementById('vip-flash-compat');
+  const slot = document.getElementById('vip-flash-slot');
+  const openActivateBtn = document.getElementById('vip-open-activate');
+  if(!slot) return;
+
+  // ====== UI FLASH PROGRESS VIP ======
+  const flashOverlay = document.getElementById('vip-flash-overlay');
+  const flashLed = document.getElementById('vip-flash-led');
+  const flashTitle = document.getElementById('vip-flash-title');
+  const flashChipName = document.getElementById('vip-flash-chip-name');
+  const flashChipDetail = document.getElementById('vip-flash-chip-detail');
+  const flashChipIc = document.getElementById('vip-flash-chip-ic');
+  const flashPct = document.getElementById('vip-flash-pct');
+  const flashBar = document.getElementById('vip-flash-bar');
+  const flashLeds = document.getElementById('vip-flash-leds');
+  const flashMsg = document.getElementById('vip-flash-msg');
+  const flashStart = document.getElementById('vip-flash-start');
+  const flashCancel = document.getElementById('vip-flash-cancel');
+  const flashDone = document.getElementById('vip-flash-done');
+  const flashClose = document.getElementById('vip-flash-close');
+
+  const LED_COUNT = 20;
+  let ledEls = [];
+
+  if(flashLeds){
+    flashLeds.innerHTML = '';
+    for(let i = 0; i < LED_COUNT; i++){
+      const el = document.createElement('i');
+      flashLeds.appendChild(el);
+      ledEls.push(el);
+    }
+  }
+
+  function openFlashModal(){
+    flashOverlay.classList.add('show');
+    requestAnimationFrame(() => flashOverlay.classList.add('visible'));
+    const eraseChk = document.getElementById('vip-flash-erase');
+    if(eraseChk) eraseChk.checked = false;
+  }
+  function closeFlashModal(){
+    flashOverlay.classList.remove('visible');
+    setTimeout(() => flashOverlay.classList.remove('show'), 300);
+  }
+
+  function setFlashState(state, msg){
+    flashLed.className = 'vip-flash-led';
+    flashBar.className = 'vip-flash-bar';
+    flashMsg.className = 'vip-flash-msg';
+    flashStart.style.display = 'none';
+    flashCancel.style.display = '';
+    flashDone.style.display = 'none';
+
+    switch(state){
+      case 'connecting':
+        flashTitle.textContent = 'ĐANG KẾT NỐI THIẾT BỊ';
+        flashChipIc.textContent = '🔌';
+        flashChipDetail.textContent = 'Đang chờ bạn chọn cổng COM...';
+        flashMsg.textContent = msg || 'Hãy chọn cổng COM của board ESP32-C3 trong hộp thoại trình duyệt.';
+        flashStart.style.display = '';
+        flashStart.textContent = '🔌 Kết nối lại';
+        flashCancel.style.display = 'none';
+        break;
+      case 'preparing':
+        flashLed.classList.add('busy');
+        flashTitle.textContent = 'ĐANG CHUẨN BỊ';
+        flashChipIc.textContent = '⚙️';
+        flashChipDetail.textContent = 'Đang đồng bộ với bootloader...';
+        flashMsg.textContent = msg || 'Đang kết nối bootloader và chuẩn bị ghi firmware...';
+        flashCancel.style.display = '';
+        break;
+      case 'flashing':
+        flashLed.classList.add('busy');
+        flashTitle.textContent = 'ĐANG NẠP FIRMWARE';
+        flashChipIc.textContent = '⚡';
+        flashChipDetail.textContent = 'Đang ghi dữ liệu vào flash — không rút cáp!';
+        flashMsg.textContent = msg || 'Quá trình nạp đang diễn ra. Vui lòng không ngắt kết nối.';
+        flashCancel.style.display = 'none';
+        break;
+      case 'done':
+        flashLed.classList.add('done');
+        flashTitle.textContent = 'NẠP THÀNH CÔNG';
+        flashChipIc.textContent = '✅';
+        flashChipDetail.textContent = 'Firmware đã được ghi hoàn tất và xác minh.';
+        flashMsg.textContent = msg || '✓ Hoàn tất! Board sẽ tự khởi động lại.';
+        flashMsg.classList.add('ok');
+        flashBar.classList.add('done');
+        flashPct.textContent = '100%';
+        flashBar.style.width = '100%';
+        ledEls.forEach(l => { l.classList.add('on'); l.classList.remove('current'); });
+        flashCancel.style.display = 'none';
+        flashDone.style.display = '';
+        flashDone.textContent = '✓ Hoàn tất';
+        break;
+      case 'ready':
+        flashLed.classList.add('done');
+        flashTitle.textContent = 'SẴN SÀNG NẠP';
+        flashChipIc.textContent = '✅';
+        flashChipDetail.textContent = 'Đã chọn cổng COM — Chờ lệnh nạp';
+        flashMsg.textContent = msg || '✅ Đã chọn cổng COM. Bấm "⚡ Bắt đầu nạp" để tiến hành flash.';
+        flashMsg.classList.add('ok');
+        flashStart.style.display = '';
+        flashStart.textContent = '⚡ Bắt đầu nạp';
+        flashCancel.style.display = '';
+        flashDone.style.display = 'none';
+        break;
+      case 'error':
+        flashLed.classList.add('error');
+        flashTitle.textContent = 'NẠP THẤT BẠI';
+        flashChipIc.textContent = '⚠️';
+        flashChipDetail.textContent = 'Đã xảy ra lỗi trong quá trình nạp.';
+        flashMsg.textContent = msg || 'Có lỗi xảy ra. Hãy thử lại hoặc kiểm tra kết nối USB.';
+        flashMsg.classList.add('err');
+        flashBar.classList.add('error');
+        flashStart.style.display = '';
+        flashStart.textContent = '🔄 Thử lại';
+        flashCancel.style.display = '';
+        flashDone.style.display = '';
+        flashDone.textContent = 'Đóng';
+        break;
+      case 'idle':
+      default:
+        flashTitle.textContent = 'SẴN SÀNG NẠP FIRMWARE';
+        flashChipIc.textContent = '🔌';
+        flashChipDetail.textContent = `${TVBGONE_BOARD} · ${TVBGONE_FILE}`;
+        flashMsg.textContent = msg || 'Bấm "Bắt đầu nạp" để tiến hành flash firmware qua USB.';
+        flashStart.style.display = '';
+        flashStart.textContent = '⚡ Bắt đầu nạp';
+        flashCancel.style.display = '';
+        flashDone.style.display = 'none';
+        break;
+    }
+  }
+
+  function setProgress(pct){
+    const p = Math.max(0, Math.min(100, pct));
+    flashPct.textContent = p + '%';
+    flashBar.style.width = p + '%';
+
+    const lit = Math.floor((p / 100) * LED_COUNT);
+    ledEls.forEach((l, i) => {
+      l.classList.remove('current');
+      if(i < lit) l.classList.add('on');
+      else l.classList.remove('on');
+      if(i === lit && p < 100 && p > 0) l.classList.add('current');
+    });
+  }
+
+  // ====== SMART LOG ======
+  const smartFeed = document.getElementById('vip-act-smart-feed');
+  const rawConsole = document.getElementById('vip-act-console');
+
+  function tsNow(){
+    const d = new Date();
+    const p = n => String(n).padStart(2, '0');
+    return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+
+  function smartLog(tagType, tagLabel, message){
+    if(!smartFeed) return;
+    const row = document.createElement('div');
+    row.className = 'smart-row';
+    const ts = document.createElement('span');
+    ts.className = 'smart-ts';
+    ts.textContent = tsNow();
+    const tag = document.createElement('span');
+    tag.className = 'smart-tag ' + (tagType || 'sys');
+    tag.textContent = tagLabel || 'HỆ THỐNG';
+    const msg = document.createElement('span');
+    msg.className = 'smart-msg';
+    msg.textContent = message;
+    row.appendChild(ts); row.appendChild(tag); row.appendChild(msg);
+    smartFeed.appendChild(row);
+    smartFeed.scrollTop = smartFeed.scrollHeight;
+  }
+
+  function rawLog(text){
+    if(!rawConsole) return;
+    const line = document.createElement('div');
+    line.textContent = `[${tsNow()}] ${text}`;
+    rawConsole.appendChild(line);
+    rawConsole.scrollTop = rawConsole.scrollHeight;
+  }
+
+  // ====== TẠO NÚT FLASH ======
+  const vipFlashBtn = document.createElement('button');
+  vipFlashBtn.className = 'btn btn-flash';
+  vipFlashBtn.type = 'button';
+  vipFlashBtn.innerHTML = '⚡ Flash qua USB';
+  vipFlashBtn.id = 'vip-real-flash-btn';
+  slot.prepend(vipFlashBtn);
+
+  // ====== LẮNG NGHE firmware.json LOAD XONG ĐỂ UPDATE CONFIG ======
+  window.addEventListener('firmware-loaded', (e) => {
+    const all = e.detail || [];
+    if(!Array.isArray(all) || !all.length) return;
+
+    const tvbItem = all.find(it => 
+      typeof it.name === 'string' && /tv\s*[-_.]?\s*b[\s-]?gone/i.test(it.name)
+    );
+
+    if(!tvbItem || !tvbItem.file){
+      console.warn('[TV B Gone] Không tìm thấy entry trong firmware.json — dùng config mặc định:', TVBGONE_FILE);
+      return;
+    }
+
+    TVBGONE_FILE = tvbItem.file;
+    TVBGONE_BOARD = tvbItem.board || TVBGONE_BOARD;
+    TVBGONE_OFFSET = (tvbItem.offset != null) ? parseInt(tvbItem.offset, 16) : 0x0;
+    if(Number.isNaN(TVBGONE_OFFSET)) TVBGONE_OFFSET = 0x0;
+
+    const dlLink = slot.querySelector('a[download]');
+    if(dlLink){
+      dlLink.href = `firmware/${encodeURIComponent(TVBGONE_FILE)}`;
+      dlLink.setAttribute('download', TVBGONE_FILE);
+    }
+
+    if(flashChipName){
+      flashChipName.textContent = `${TVBGONE_BOARD} · ${TVBGONE_FILE}`;
+    }
+    if(flashChipDetail && !/đang|Đang/.test(flashChipDetail.textContent)){
+      flashChipDetail.textContent = `${TVBGONE_BOARD} Super Mini · ${TVBGONE_FILE}`;
+    }
+
+    const pageLabel = document.querySelector('.vip-chip-label span:last-child');
+    if(pageLabel){
+      pageLabel.textContent = `${TVBGONE_FILE} · ${TVBGONE_BOARD} Super Mini`;
+    }
+
+    const specB = document.querySelectorAll('.vip-spec-strip .spec b');
+    const specS = document.querySelectorAll('.vip-spec-strip .spec span');
+    if(specB[0]) specB[0].textContent = TVBGONE_BOARD;
+    if(specB[1] && tvbItem.version) specB[1].textContent = 'v' + tvbItem.version;
+    if(specB[2] && tvbItem.size) specB[2].textContent = tvbItem.size;
+    if(specB[3]) specB[3].textContent = 'NVS Auth';
+    if(specS[0]) specS[0].textContent = 'Super Mini';
+    if(specS[1] && tvbItem.date) specS[1].textContent = 'Build ' + tvbItem.date;
+    if(specS[2]) specS[2].textContent = 'Dung lượng ROM';
+    if(specS[3]) specS[3].textContent = 'Lưu key vĩnh viễn';
+
+    const heroP = document.querySelector('.vip-hero p');
+    if(heroP && tvbItem.description){
+      heroP.textContent = tvbItem.description;
+    }
+
+    console.log('[TV B Gone] ✅ Đã load config từ firmware.json:', {
+      name: tvbItem.name,
+      file: TVBGONE_FILE,
+      board: TVBGONE_BOARD,
+      offset: '0x' + TVBGONE_OFFSET.toString(16)
+    });
+  });
+
+  // ====== BIẾN FLASH ======
+  let esploaderMod = null;
+  let transport = null;
+  let esploader = null;
+  let currentPort = null;
+
+  async function loadLib(){
+    if(!esploaderMod){
+      esploaderMod = await import('https://unpkg.com/esptool-js/bundle.js');
+    }
+    return esploaderMod;
+  }
+
+  // ====== HÀM FLASH CHÍNH ======
+  async function doFlashWithPort(port){
+    setProgress(0);
+    setFlashState('preparing', 'Đang kết nối bootloader...');
+    smartLog('sys', 'BẮT ĐẦU', '🚀 Bắt đầu nạp firmware TV-B-Gone VIP...');
+
+    currentPort = port;
+
+    setFlashState('preparing', 'Đang kết nối bootloader và nhận diện chip...');
+    smartLog('sys', 'KẾT NỐI', '🔌 Đang kết nối bootloader...');
+
+    const terminal = {
+      clean(){},
+      writeLine(data){ 
+        rawLog(String(data)); 
+        const msg = String(data);
+        if(/Connecting|Chip is|Detecting|Uploading|Writing|Compressed|Hash of data verified|Leaving|Hard resetting/i.test(msg)){
+          setFlashState('preparing', msg);
+        }
+      },
+      write(data){ rawLog(String(data)); },
+    };
+
+    try{
+      const { ESPLoader, Transport } = await loadLib();
+      transport = new Transport(port, true);
+      esploader = new ESPLoader({
+        transport,
+        baudrate: 115200,
+        terminal,
+        debugLogging: false,
+      });
+
+      const chipName = await esploader.main();
+      smartLog('ok', 'CHIP', `✓ Đã nhận diện chip: ${chipName}`);
+      setFlashState('flashing', `Đã nhận diện ${chipName}. Đang tải firmware...`);
+      flashChipName.textContent = `${chipName} · ${TVBGONE_FILE}`;
+
+      smartLog('sys', 'TẢI FILE', `📥 Đang tải ${TVBGONE_FILE}...`);
+      const fileUrl = new URL(`firmware/${TVBGONE_FILE}`, window.location.href).href;
+      const resp = await fetch(fileUrl);
+      if(!resp.ok){
+        throw new Error(`Không tải được firmware ${TVBGONE_FILE} (HTTP ${resp.status})`);
+      }
+      const buf = await resp.arrayBuffer();
+      const data = new Uint8Array(buf);
+      smartLog('ok', 'TẢI FILE', `✓ Đã tải firmware: ${(data.length / 1024).toFixed(1)} KB`);
+      flashChipDetail.textContent = `Kích thước: ${(data.length / 1024).toFixed(1)} KB · Offset: 0x${TVBGONE_OFFSET.toString(16)}`;
+
+      smartLog('sys', 'GHI FLASH', `⚡ Bắt đầu ghi ${(data.length / 1024).toFixed(1)} KB vào địa chỉ 0x${TVBGONE_OFFSET.toString(16)}...`);
+      setFlashState('flashing', 'Đang ghi dữ liệu vào flash — KHÔNG rút cáp!');
+
+      const eraseAll = document.getElementById('vip-flash-erase')?.checked || false;
+      if(eraseAll){
+        smartLog('warn', 'ERASE', '⚠️ Đã bật xoá toàn bộ flash trước khi ghi — quá trình sẽ lâu hơn bình thường...');
+      }
+
+      await esploader.writeFlash({
+        fileArray: [{ data, address: TVBGONE_OFFSET }],
+        flashMode: 'keep',
+        flashFreq: 'keep',
+        flashSize: 'keep',
+        eraseAll: eraseAll,
+        compress: true,
+        reportProgress: (fileIndex, written, total) => {
+          const pct = total ? Math.round((written / total) * 100) : 0;
+          setProgress(pct);
+        },
+      });
+
+      smartLog('sys', 'RESET', '⟲ Đang reset board để chạy firmware mới...');
+      await esploader.after('hard_reset');
+
+      setFlashState('done', '✓ Nạp firmware thành công! Board đang khởi động lại...');
+      setProgress(100);
+      smartLog('ok', 'FLASH XONG', '🎉 Đã flash firmware thành công! Đang tự động kết nối để đọc mã MAC...');
+      if(typeof toast === 'function') toast('🎉 Flash TV-B-Gone VIP thành công!');
+
+      try{ if(transport) await transport.disconnect(); }catch(e){}
+      esploader = null; transport = null; currentPort = null;
+
+      setTimeout(async () => {
+        closeFlashModal();
+        if(typeof window.openActivateModal === 'function') window.openActivateModal();
+        try{
+          await new Promise(r => setTimeout(r, 800));
+          if(typeof window.openSpecificPortVip === 'function'){
+            const ports = await navigator.serial.getPorts();
+            if(ports && ports.length > 0){
+              await window.openSpecificPortVip(ports[ports.length - 1]);
+            }
+          }
+        }catch(err){
+          smartLog('sys', 'HƯỚNG DẪN', 'Bấm nút "🔌 Kết nối Serial" để đọc mã MAC thiết bị.');
+        }
+      }, 1500);
+
+    }catch(err){
+      const errMsg = (err && err.message) ? err.message : String(err);
+      console.error('[TVBGone Flash]', err);
+      setFlashState('error', `⚠️ ${errMsg}`);
+      smartLog('err', 'LỖI FLASH', `❌ ${errMsg}`);
+      if(typeof toast === 'function') toast('Flash thất bại — xem log để biết chi tiết');
+      try{ if(transport) await transport.disconnect(); }catch(e){}
+      esploader = null; transport = null; currentPort = null;
+    }
+  }
+
+  // ====== GẮN SỰ KIỆN ======
+  let pendingPort = null;
+
+  vipFlashBtn.addEventListener('click', async () => {
+    openFlashModal();
+    setProgress(0);
+    setFlashState('connecting');
+    smartLog('sys', 'CHỌN CỔNG', '🔌 Đang chờ bạn chọn cổng COM...');
+
+    try{
+      pendingPort = await navigator.serial.requestPort();
+    }catch(err){
+      pendingPort = null;
+      setFlashState('error', '⚠️ Bạn chưa chọn cổng COM. Hãy cắm cáp USB và bấm "Thử lại".');
+      smartLog('warn', 'HUỶ', 'Người dùng đã huỷ chọn cổng COM. Hãy cắm cáp và bấm "Thử lại".');
+      if(typeof toast === 'function') toast('⚠ Bạn chưa chọn cổng COM');
+      return;
+    }
+
+    smartLog('ok', 'ĐÃ CHỌN CỔNG', '✅ Đã chọn cổng COM. Bấm "⚡ Bắt đầu nạp" để tiến hành.');
+    setFlashState('ready');
+  });
+
+  flashStart?.addEventListener('click', () => {
+    if(!pendingPort){
+      vipFlashBtn.click();
+      return;
+    }
+    doFlashWithPort(pendingPort);
+    pendingPort = null;
+  });
+
+  flashCancel?.addEventListener('click', closeFlashModal);
+  flashDone?.addEventListener('click', closeFlashModal);
+  flashClose?.addEventListener('click', closeFlashModal);
+
+  if(!canFlashInBrowser){
+    compat.innerHTML = `<div class="compat-banner warn"><span class="ic">⚠</span><div>Trình duyệt này chưa hỗ trợ flash qua web — dùng nút <b>Tải firmware (.bin)</b> rồi nạp bằng esptool, hoặc mở trang bằng Chrome/Edge trên máy tính.</div></div>`;
+    vipFlashBtn.disabled = true;
+  }else{
+    compat.innerHTML = `<div class="compat-banner ok"><span class="ic">✓</span><div><b>Trình duyệt hỗ trợ Web Serial.</b> Bấm <b>Flash qua USB</b> để nạp firmware TV-B-Gone VIP trực tiếp.</div></div>`;
+  }
+
+  // ====== MODAL KÍCH HOẠT ======
+  const overlay = document.getElementById('vip-activate-overlay');
+  const closeBtn = document.getElementById('vip-activate-close');
+  const led = document.getElementById('vip-act-led');
+  const statusText = document.getElementById('vip-act-status');
+  const connectBtn = document.getElementById('vip-act-connect');
+  const disconnectBtn = document.getElementById('vip-act-disconnect');
+  const recheckMacBtn = document.getElementById('vip-act-recheck-mac');
+  const resetChipBtn = document.getElementById('vip-act-reset-chip');
+
+  const macValueEl = document.getElementById('vip-act-mac');
+  const macStatusTag = document.getElementById('vip-mac-status-tag');
+  const macCopyBtn = document.getElementById('vip-act-mac-copy');
+  const macTiktokBtn = document.getElementById('vip-act-tiktok-msg');
+
+  const licenseBadge = document.getElementById('vip-act-license');
+  const licenseIcon = document.getElementById('vip-act-license-icon');
+  const licenseText = document.getElementById('vip-act-license-text');
+  const pageLicenseTag = document.getElementById('vip-page-license-tag');
+
+  const keyInput = document.getElementById('vip-act-key');
+  const keyCount = document.getElementById('vip-key-counter');
+  const sendBtn = document.getElementById('vip-act-send');
+  const checkBtn = document.getElementById('vip-act-check');
+  const resetKeyBtn = document.getElementById('vip-act-reset-key');
+  const helpBtn = document.getElementById('vip-act-help');
+
+  const smartCopyBtn = document.getElementById('vip-smart-copy');
+  const smartClearBtn = document.getElementById('vip-smart-clear');
+
+  let port = null, reader = null, reading = false, buffer = '';
+  let detectedMac = '';
+  const KEY_MAX_LEN = 140;
+
+  function setLicenseState(state, customMsg){
+    if(!licenseBadge) return;
+    licenseBadge.className = 'vip-license-status ' + state;
+    if(state === 'active'){
+      licenseIcon.textContent = '🟢';
+      licenseText.textContent = customMsg || 'ĐÃ KÍCH HOẠT THÀNH CÔNG (VIP ACTIVE) — Thiết bị đã sẵn sàng sử dụng!';
+      if(pageLicenseTag){
+        pageLicenseTag.className = 'vip-mac-status-tag detected';
+        pageLicenseTag.textContent = 'ĐÃ KÍCH HOẠT (VIP)';
+      }
+    }else if(state === 'unactivated'){
+      licenseIcon.textContent = '🟡';
+      licenseText.textContent = customMsg || 'CHƯA KÍCH HOẠT — Hãy sao chép MAC gửi qua TikTok: hungesp32bw16 để nhận key!';
+      if(pageLicenseTag){
+        pageLicenseTag.className = 'vip-mac-status-tag waiting';
+        pageLicenseTag.textContent = 'CHƯA KÍCH HOẠT';
+      }
+    }else if(state === 'invalid'){
+      licenseIcon.textContent = '🔴';
+      licenseText.textContent = customMsg || 'SAI MÃ KEY — Mã kích hoạt không hợp lệ hoặc không khớp với mã MAC!';
+    }else if(state === 'reset'){
+      licenseIcon.textContent = '🔄';
+      licenseText.textContent = 'ĐÃ XÓA KEY — Bộ nhớ NVS đã được đặt lại. Hãy khởi động lại để kích hoạt.';
+    }else{
+      licenseIcon.textContent = '⚪';
+      licenseText.textContent = customMsg || 'Chưa kết nối — Vui lòng bấm "Kết nối Serial" để kiểm tra bản quyền.';
+    }
+  }
+
+  function resetMacDisplay(){
+    detectedMac = '';
+    macValueEl.textContent = '— đang chờ dữ liệu —';
+    macValueEl.classList.add('pending');
+    macStatusTag.className = 'vip-mac-status-tag waiting';
+    macStatusTag.textContent = 'ĐANG ĐỌC...';
+    macCopyBtn.disabled = true;
+    macTiktokBtn.disabled = true;
+    macCopyBtn.classList.remove('copied');
+    setLicenseState('unknown');
+  }
+
+  function setDetectedMac(macStr){
+    detectedMac = macStr.toUpperCase();
+    macValueEl.textContent = detectedMac;
+    macValueEl.classList.remove('pending');
+    macStatusTag.className = 'vip-mac-status-tag detected';
+    macStatusTag.textContent = 'ĐÃ NHẬN DIỆN ✓';
+    macCopyBtn.disabled = false;
+    macTiktokBtn.disabled = false;
+
+    // Hiệu ứng nhấp nháy MAC
+    macValueEl.style.transition = 'none';
+    macValueEl.style.textShadow = '0 0 30px rgba(212,175,55,.85)';
+    setTimeout(() => {
+      macValueEl.style.transition = 'text-shadow .8s ease';
+      macValueEl.style.textShadow = '0 0 16px rgba(212,175,55,.3)';
+    }, 400);
+  }
+
+  // ✅ Regex bắt MAC — ưu tiên pattern firmware hungtesp
+  function extractMacFromLine(line){
+    // ƯU TIÊN: pattern firmware in ra ">> MAC: 0xXXXXXXXX"
+    let m = line.match(/MAC\s*[:=]\s*(?:0x)?([0-9A-Fa-f]{6,16})/i);
+    if(m) return '0x' + m[1].replace(/^0x/i, '').toUpperCase();
+
+    // Pattern: [MAC] A1B2C3D4 hoặc MAC:A1B2C3D4
+    m = line.match(/\[?MAC\]?\s*[:=]?\s*(?:0x)?([0-9A-Fa-f]{6,16})\b/i);
+    if(m) return '0x' + m[1].replace(/^0x/i, '').toUpperCase();
+
+    // Pattern hex 8 ký tự bất kỳ (fallback)
+    m = line.match(/\b(?:0x)?([0-9A-Fa-f]{8})\b/);
+    if(m && /mac|chip|efuse|id/i.test(line)) return '0x' + m[1].toUpperCase();
+
+    // Pattern MAC dạng AA:BB:CC:DD:EE:FF
+    m = line.match(/\b([0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5})\b/);
+    if(m) return m[1].replace(/-/g, ':').toUpperCase();
+
+    return null;
+  }
+
+    function handleIncomingLine(rawLine){
+    const line = rawLine.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '').trim();
+    if(!line) return;
+
+    // ✅ Bỏ qua hoàn toàn dòng hướng dẫn "Sau do nhap: key ..." — không hiện ở đâu cả
+    if(line.includes('Sau do nhap:') || line.includes('nhap: key')) return;
+
+    rawLog(line);
+
+    // ═══════════════════════════════════════════════════════════════
+    // ✅ NHẬN DIỆN BANNER XÁC THỰC FIRMWARE — hungtesp
+    // ═══════════════════════════════════════════════════════════════
+
+    // Bỏ qua dòng gạch ngang phân cách "====" cho gọn log
+    if(/^=+$/.test(line)) return;
+
+    // Banner tiêu đề xác thực
+    if(line.includes('XAC THUC FIRMWARE') && line.includes('hungtesp')){
+      smartLog('sys', 'XÁC THỰC FW', '⚡ Đã khởi động module xác thực firmware TV-B-Gone VIP — hungtesp');
+      return;
+    }
+
+    // Bắt MAC từ "MAC cua chip: 0xXXXXXXXX"
+    const foundMac = extractMacFromLine(line);
+    if(foundMac && !detectedMac){
+      if(window.__vipMacTimeout){
+        clearTimeout(window.__vipMacTimeout);
+        window.__vipMacTimeout = null;
+      }
+      setDetectedMac(foundMac);
+      smartLog('mac', 'MÃ MAC HIỆN TẠI', `✅ Đã truy xuất thành công: ${foundMac}`);
+      smartLog('sys', 'THÔNG BÁO', `→ MAC hiện tại của chip là: ${foundMac} — Sẵn sàng nhận key kích hoạt.`);
+      if(typeof toast === 'function') toast('✓ Đã đọc MAC: ' + foundMac);
+    }
+
+    // ── Trạng thái bản quyền ──
+    if(line.includes('Da kich hoat truoc do')){
+      setLicenseState('active');
+      smartLog('ok', 'BẢN QUYỀN', '🎉 ĐÃ KÍCH HOẠT TRƯỚC ĐÓ — Firmware hợp lệ, chip sẵn sàng hoạt động.');
+      if(typeof toast === 'function') toast('✓ Firmware đã được kích hoạt hợp lệ');
+    }
+    else if(line.includes('KICH HOAT THANH CONG') || line.includes('KICH HOAT OK') || line.includes('[OK] Da luu key vao NVS')){
+      setLicenseState('active');
+      smartLog('ok', 'BẢN QUYỀN', '🎉 KÍCH HOẠT THÀNH CÔNG! Thiết bị đã lưu bản quyền vĩnh viễn vào NVS.');
+      if(typeof toast === 'function') toast('🎉 Kích hoạt TV-B-Gone VIP thành công!');
+    }
+    else if(line.includes('CHUA KICH HOAT')){
+      setLicenseState('unactivated');
+      smartLog('warn', 'BẢN QUYỀN', '⚠️ Thiết bị CHƯA KÍCH HOẠT. Gửi MAC cho TikTok: hungesp32bw16 để nhận key!');
+      smartLog('sys', 'HƯỚNG DẪN', '→ Sau khi nhận key, dán vào ô "Nhập Key Kích Hoạt" bên dưới và bấm ⚡ Kích hoạt ngay.');
+    }
+    else if(line.includes('SAI KEY!') || line.includes('SAI CHU KY') || line.includes('KHONG hop le') || line.includes('Chu ky luu KHONG hop le')){
+      setLicenseState('invalid');
+      smartLog('err', 'LỖI KEY', '❌ Mã key kích hoạt không đúng hoặc không khớp với mã MAC này!');
+    }
+    else if(line.includes('Da xoa key') || line.includes('Da xoa chu ky')){
+      setLicenseState('reset');
+      smartLog('warn', 'ĐẶT LẠI', '🔄 Đã xóa key bản quyền trong bộ nhớ NVS. Hãy khởi động lại board để kích hoạt.');
+    }
+    else if(line.includes('[NVS] Co key da luu') || line.includes('Co chu ky da luu')){
+      smartLog('sys', 'BỘ NHỚ', '💾 Đã tìm thấy dữ liệu key lưu trong bộ nhớ NVS.');
+    }
+    else if(line.includes('[NVS] Chua co key nao') || line.includes('Chua co chu ky nao')){
+      smartLog('warn', 'BỘ NHỚ', 'ℹ️ Chưa có key nào được lưu trong chip.');
+    }
+    else if(line.includes('Dang khoi dong lai') || line.includes('Dang khoi dong')){
+      smartLog('sys', 'REBOOT', '🔄 Thiết bị đang khởi động lại...');
+    }
+    // ── Thông báo hướng dẫn từ firmware ──
+    else if(line.includes('Gui MAC tren cho') || line.includes('TikTok: hungesp32bw16')){
+      smartLog('sys', 'HƯỚNG DẪN', '📱 Gửi mã MAC ở trên qua TikTok: @hungesp32bw16 để nhận key kích hoạt.');
+    }
+  }
+
+  macCopyBtn.addEventListener('click', async () => {
+    if(!detectedMac) return;
+    try{
+      await navigator.clipboard.writeText(detectedMac);
+      macCopyBtn.textContent = '✓ Đã copy MAC';
+      if(typeof toast === 'function') toast('✓ Đã sao chép mã MAC: ' + detectedMac);
+      setTimeout(() => { macCopyBtn.textContent = '📋 Copy MAC'; }, 1800);
+    }catch(e){
+      if(typeof toast === 'function') toast('Không copy được — hãy cấp quyền clipboard');
+    }
+  });
+
+  macTiktokBtn.addEventListener('click', async () => {
+    if(!detectedMac) return;
+    const msg = `Chào shop hungesp32bw16, mình muốn mua key kích hoạt TV-B-Gone cho MAC: ${detectedMac}`;
+    try{
+      await navigator.clipboard.writeText(msg);
+      macTiktokBtn.textContent = '✓ Đã copy tin nhắn';
+      if(typeof toast === 'function') toast('✓ Đã copy cú pháp gửi TikTok!');
+      setTimeout(() => { macTiktokBtn.textContent = '💬 Copy gửi TikTok'; }, 1800);
+    }catch(e){
+      if(typeof toast === 'function') toast('Không copy được');
+    }
+  });
+
+  function openActivateModal(){
+    overlay.classList.add('show');
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+  }
+  function closeActivateModal(){
+    overlay.classList.remove('visible');
+    setTimeout(() => overlay.classList.remove('show'), 180);
+  }
+  window.openActivateModal = openActivateModal;
+  window.closeActivateModal = closeActivateModal;
+
+  openActivateBtn?.addEventListener('click', openActivateModal);
+  closeBtn?.addEventListener('click', async () => { await closePort(); closeActivateModal(); });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape' && overlay.classList.contains('show')) closeActivateModal();
+  });
+
+  function connectedUI(){
+    connectBtn.style.display = 'none';
+    disconnectBtn.style.display = '';
+    recheckMacBtn.disabled = false;
+    resetChipBtn.disabled = false;
+    checkBtn.disabled = false;
+    resetKeyBtn.disabled = false;
+    helpBtn.disabled = false;
+    led.classList.add('on');
+    statusText.textContent = 'ĐÃ KẾT NỐI (115200)';
+    sendBtn.disabled = false;
+  }
+  function disconnectedUI(){
+    connectBtn.style.display = '';
+    disconnectBtn.style.display = 'none';
+    recheckMacBtn.disabled = true;
+    resetChipBtn.disabled = true;
+    checkBtn.disabled = true;
+    resetKeyBtn.disabled = true;
+    helpBtn.disabled = true;
+    led.classList.remove('on');
+    statusText.textContent = 'CHƯA KẾT NỐI';
+    sendBtn.disabled = true;
+    setLicenseState('unknown');
+  }
+  disconnectedUI();
+  if(!canFlashInBrowser){
+    connectBtn.disabled = true;
+    statusText.textContent = 'Cần Chrome/Edge máy tính';
+  }
+
+  async function readLoop(){
+    if(!port || !port.readable || reading) return;
+    reading = true;
+    const decoder = new TextDecoder();
+    reader = port.readable.getReader();
+    try{
+      while(reading){
+        const { value, done } = await reader.read();
+        if(done) break;
+        if(value){
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          lines.forEach(l => { const c = l.replace(/\r$/, ''); if(c) handleIncomingLine(c); });
+        }
+      }
+    }catch(err){
+      if(reading){
+        smartLog('err', 'MẤT KẾT NỐI', `Lỗi Serial: ${err.message || err}`);
+        rawLog(`[LỖI] ${err.message || err}`);
+      }
+    }finally{
+      try{ reader.releaseLock(); }catch(e){}
+      reader = null; reading = false;
+    }
+  }
+
+  async function closePort(){
+    reading = false;
+    try{ if(reader) await reader.cancel(); }catch(e){}
+    try{ if(port) await port.close(); }catch(e){}
+    reader = null; port = null; buffer = '';
+    disconnectedUI();
+  }
+
+  async function writeSerial(text){
+    if(!port || !port.writable) return;
+    let writer = null;
+    try{
+      writer = port.writable.getWriter();
+      await writer.write(new TextEncoder().encode(text));
+    }catch(e){
+      smartLog('err', 'LỖI GỬI', e.message || String(e));
+    }finally{
+      try{ if(writer) writer.releaseLock(); }catch(e){}
+    }
+  }
+
+  // ✅ Mở cổng Serial + gửi reboot + đọc MAC tự động
+   async function openSpecificPort(p){
+    try{
+      port = p;
+      await port.open({ baudRate: 115200, dataBits: 8, stopBits: 1, parity: 'none', flowControl: 'none' });
+      resetMacDisplay();
+      smartLog('sys', 'KẾT NỐI', '🔌 Đã mở cổng Web Serial thành công (115200 baud).');
+      connectedUI();
+
+            readLoop();
+
+      // BƯỚC 1: Gửi lệnh reboot để chip khởi động lại sạch
+      await new Promise(r => setTimeout(r, 300));
+      smartLog('cmd', 'REBOOT', '⟲ Gửi lệnh "reboot" để chip khởi động lại sạch...');
+      rawLog('> reboot');
+      await writeSerial('reboot\r\n');
+
+      // BƯỚC 2: Đợi 2s cho chip boot xong + firmware tự in MAC
+      await new Promise(r => setTimeout(r, 2000));
+
+      // ✅ Nếu đã bắt được MAC từ boot log → không cần gửi lệnh mac nữa
+          
+      if(!detectedMac){
+        // BƯỚC 3: Fallback — chỉ gửi lệnh mac khi boot log không có MAC
+        rawLog('> mac');
+        await writeSerial('mac\r\n');
+
+        // BƯỚC 4: Timeout 3s
+        if(window.__vipMacTimeout) clearTimeout(window.__vipMacTimeout);
+        window.__vipMacTimeout = setTimeout(() => {
+          if(!detectedMac){
+            macValueEl.textContent = '⚠️ Không nhận được MAC';
+            macStatusTag.className = 'vip-mac-status-tag waiting';
+            macStatusTag.textContent = 'TIMEOUT';
+            smartLog('err', 'TRUY XUẤT MAC', '❌ Hết thời gian chờ. Bấm "🔄 Đọc lại MAC".');
+            if(typeof toast === 'function') toast('⚠️ Không đọc được MAC — bấm Đọc lại');
+          }
+        }, 3000);
+      }
+    }catch(err){
+      if(err?.name !== 'NotFoundError'){
+        smartLog('err', 'LỖI KẾT NỐI', err?.message || err);
+      }
+      await closePort();
+    }
+  }
+  window.openSpecificPortVip = openSpecificPort;
+
+  connectBtn.addEventListener('click', async () => {
+    try{
+      const p = await navigator.serial.requestPort();
+      await openSpecificPort(p);
+    }catch(err){
+      if(err?.name !== 'NotFoundError') smartLog('err', 'LỖI', err?.message || err);
+    }
+  });
+
+  disconnectBtn.addEventListener('click', async () => {
+    smartLog('sys', 'NGẮT KẾT NỐI', '— Đã ngắt kết nối với thiết bị —');
+    await closePort();
+  });
+
+  // ✅ Nút "Đọc lại MAC" — gửi lệnh mac trực tiếp
+  recheckMacBtn.addEventListener('click', async () => {
+    if(!port || !port.writable){
+      smartLog('err', 'CHƯA KẾT NỐI', 'Vui lòng kết nối Serial trước khi đọc MAC.');
+      if(typeof toast === 'function') toast('Chưa kết nối Serial');
+      return;
+    }
+
+    detectedMac = '';
+    macValueEl.textContent = '⏳ Đang truy xuất...';
+    macValueEl.classList.add('pending');
+    macStatusTag.className = 'vip-mac-status-tag waiting';
+    macStatusTag.textContent = 'ĐANG ĐỌC...';
+    macCopyBtn.disabled = true;
+    macTiktokBtn.disabled = true;
+
+    smartLog('cmd', 'TRUY XUẤT MAC', '🔄 Đang gửi lệnh truy vấn MAC...');
+    rawLog('> mac');
+    await writeSerial('mac\r\n');
+
+    if(window.__vipMacTimeout) clearTimeout(window.__vipMacTimeout);
+    window.__vipMacTimeout = setTimeout(() => {
+      if(!detectedMac){
+        macValueEl.textContent = '⚠️ Không nhận được MAC';
+        macStatusTag.className = 'vip-mac-status-tag waiting';
+        macStatusTag.textContent = 'TIMEOUT';
+        smartLog('err', 'TRUY XUẤT MAC', '❌ Hết thời gian chờ (3s). Chip không phản hồi lệnh "mac".');
+        if(typeof toast === 'function') toast('⚠️ Không đọc được MAC — thử lại');
+      }
+    }, 3000);
+  });
+
+  // ✅ Nút Reboot chip — gửi lệnh "reboot" qua Serial
+  resetChipBtn.addEventListener('click', async () => {
+    if(!port || !port.writable){
+      smartLog('err', 'REBOOT', 'Chưa kết nối Serial — không thể gửi lệnh reboot.');
+      if(typeof toast === 'function') toast('Chưa kết nối Serial');
+      return;
+    }
+
+    smartLog('cmd', 'REBOOT', '⟲ Đang gửi lệnh "reboot" tới firmware...');
+    rawLog('> reboot');
+
+    await writeSerial('reboot\r\n');
+
+    detectedMac = '';
+    macValueEl.textContent = '⏳ Chip đang khởi động lại...';
+    macValueEl.classList.add('pending');
+    macStatusTag.className = 'vip-mac-status-tag waiting';
+    macStatusTag.textContent = 'ĐANG REBOOT...';
+    macCopyBtn.disabled = true;
+    macTiktokBtn.disabled = true;
+
+    smartLog('sys', 'REBOOT', '⟲ Lệnh đã gửi. Chip sẽ khởi động lại trong ~1s...');
+
+    // Sau khi chip boot xong → tự động gửi lệnh mac
+         // Sau khi chip boot xong → tự động gửi lệnh mac
+    setTimeout(async () => {
+      if(port && port.writable){
+        rawLog('> mac');
+        await writeSerial('mac\r\n');
+
+        if(window.__vipMacTimeout) clearTimeout(window.__vipMacTimeout);
+        window.__vipMacTimeout = setTimeout(() => {
+          if(!detectedMac){
+            macValueEl.textContent = '⚠️ Không nhận được MAC';
+            macStatusTag.className = 'vip-mac-status-tag waiting';
+            macStatusTag.textContent = 'TIMEOUT';
+            smartLog('err', 'TRUY XUẤT MAC', '❌ Sau reboot không nhận được MAC. Bấm "🔄 Đọc lại MAC".');
+            if(typeof toast === 'function') toast('⚠️ Không đọc được MAC — thử lại');
+          }
+        }, 3500);
+      }
+    }, 1500);
+  });
+
+  checkBtn.addEventListener('click', async () => {
+    smartLog('cmd', 'LỆNH CHECK', '🔍 Đang kiểm tra trạng thái key lưu trong NVS...');
+    rawLog('> check');
+    await writeSerial('check\r\n');
+  });
+
+  resetKeyBtn.addEventListener('click', async () => {
+    const ok = typeof customConfirm === 'function'
+      ? await customConfirm('Xác nhận xóa key bản quyền trong chip? Thao tác sẽ đưa board về trạng thái CHƯA KÍCH HOẠT.', { title: 'Xóa Key Kích Hoạt', okLabel: 'Xóa Key' })
+      : confirm('Xác nhận xóa key bản quyền trong chip?');
+    if(!ok) return;
+    smartLog('cmd', 'LỆNH RESET', '⚠️ Đang gửi lệnh xóa key trong NVS...');
+    rawLog('> reset');
+    await writeSerial('reset\r\n');
+  });
+
+  helpBtn.addEventListener('click', async () => {
+    smartLog('cmd', 'LỆNH HELP', '❓ Yêu cầu danh sách lệnh từ chip...');
+    rawLog('> help');
+    await writeSerial('help\r\n');
+  });
+
+  // ✅ Input key: cho phép tối đa 140 ký tự hex
+  keyInput.addEventListener('input', () => {
+    let val = keyInput.value.trim();
+    val = val.replace(/^KEY\s+/i, '').replace(/^0x/i, '');
+    val = val.replace(/[^0-9A-Fa-f]/g, '').slice(0, KEY_MAX_LEN);
+
+    const len = val.length;
+    keyCount.textContent = `${len}/${KEY_MAX_LEN} HEX`;
+
+    if(len === 0){
+      keyCount.style.color = 'var(--gold)';
+    }else if(len === KEY_MAX_LEN){
+      keyCount.style.color = 'var(--trace)';
+    }else{
+      keyCount.style.color = '#f39c12';
+    }
+
+    sendBtn.disabled = len === 0;
+
+    if(val !== keyInput.value){
+      keyInput.value = val;
+    }
+  });
+
+  // ✅ Gửi key: chấp nhận tối đa 140 ký tự hex
+  async function sendKey(){
+    const raw = keyInput.value.trim();
+    if(!raw || !port || !port.writable){
+      if(!port) smartLog('err', 'CHƯA KẾT NỐI', 'Vui lòng kết nối Serial trước khi gửi key.');
+      return;
+    }
+
+    const cleanHex = raw.replace(/^key\s+/i, '').replace(/^0x/i, '').replace(/[^0-9A-Fa-f]/g, '');
+
+    if(cleanHex.length === 0){
+      smartLog('err', 'LỖI KEY', 'Chưa nhập key.');
+      if(typeof toast === 'function') toast('Chưa nhập key');
+      return;
+    }
+
+    if(cleanHex.length > KEY_MAX_LEN){
+      smartLog('err', 'LỖI KEY', `Key quá dài (${cleanHex.length}/${KEY_MAX_LEN} ký tự).`);
+      if(typeof toast === 'function') toast(`Key tối đa ${KEY_MAX_LEN} ký tự`);
+      return;
+    }
+
+    const cmd = `key ${cleanHex}\r\n`;
+    smartLog('cmd', 'GỬI KEY', `📤 Đang gửi key ${cleanHex.length} ký tự...`);
+    smartLog('cmd', 'KEY DATA', `${cleanHex.slice(0, 32)}${cleanHex.length > 32 ? '…' : ''}`);
+    rawLog(`> key ${cleanHex}`);
+    await writeSerial(cmd);
+  }
+
+  sendBtn.addEventListener('click', sendKey);
+  keyInput.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); sendKey(); }
+  });
+
+  smartClearBtn?.addEventListener('click', () => {
+    smartFeed.innerHTML = '';
+    rawConsole.innerHTML = '';
+    smartLog('sys', 'HỆ THỐNG', 'Đã xoá nhật ký.');
+  });
+
+  smartCopyBtn?.addEventListener('click', async () => {
+    try{
+      await navigator.clipboard.writeText(smartFeed.innerText);
+      if(typeof toast === 'function') toast('✓ Đã copy nhật ký hệ thống');
+    }catch(e){
+      if(typeof toast === 'function') toast('Không copy được');
+    }
+  });
+
+  navigator.serial?.addEventListener('disconnect', (event) => {
+    if(port && event.target === port){
+      smartLog('err', 'MẤT KẾT NỐI', 'Thiết bị đã bị rút cáp hoặc mất nguồn.');
+      closePort();
+    }
+  });
+})();
+
+
+// =====================================================================
+// TAB "SERIAL MONITOR" — Web Serial độc lập
+// =====================================================================
+(function serialMonitorTab(){
+  const banner = document.getElementById('serial-compat-banner');
+  const connectBtn = document.getElementById('sm-connect');
+  const disconnectBtn = document.getElementById('sm-disconnect');
+  const baudSel = document.getElementById('sm-baud');
+  const statusEl = document.getElementById('sm-status');
+  const infoEl = document.getElementById('sm-info');
+  const led = document.getElementById('sm-led');
+  const consoleEl = document.getElementById('sm-console');
+  const clearBtn = document.getElementById('sm-clear');
+  const copyBtn = document.getElementById('sm-copy');
+  const resetBtn = document.getElementById('sm-reset');
+  const inputEl = document.getElementById('sm-input');
+  const sendBtn = document.getElementById('sm-send');
+  const serialPanel = document.getElementById('serial-panel');
+
+  if(!('serial' in navigator) || !window.isSecureContext){
+    banner.innerHTML = `<div class="compat-banner warn"><span class="ic">⚠</span><div><b>Serial Monitor chưa được hỗ trợ.</b> Hãy dùng Chrome hoặc Edge trên máy tính và mở website bằng HTTPS hoặc localhost.</div></div>`;
+    connectBtn.disabled = true;
+    return;
+  }
+
+  banner.innerHTML = `<div class="compat-banner ok"><span class="ic">✓</span><div><b>Web Serial đã sẵn sàng.</b> Kết nối board để xem log realtime trực tiếp.</div></div>`;
+
+  let port = null;
+  let reader = null;
+  let reading = false;
+  let buffer = '';
+
+  function timestamp(){
+    const d = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  function addLog(text, cls){
+    const line = document.createElement('div');
+    if(cls) line.className = cls;
+    const ts = document.createElement('span');
+    ts.className = 'ts';
+    ts.textContent = `[${timestamp()}] `;
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = '[ESP] ';
+    line.appendChild(ts);
+    line.appendChild(tag);
+    line.appendChild(document.createTextNode(String(text).replace(/^>\s*/, '')));
+    consoleEl.appendChild(line);
+    consoleEl.scrollTop = consoleEl.scrollHeight;
+  }
+
+  function connectedUI(){
+    connectBtn.style.display = 'none';
+    disconnectBtn.style.display = '';
+    sendBtn.disabled = false;
+    statusEl.textContent = 'CONNECTED';
+    led.classList.add('on');
+    infoEl.textContent = `Đang nhận dữ liệu · ${baudSel.value} baud`;
+    serialPanel.classList.add('is-connected');
+  }
+
+  function disconnectedUI(){
+    connectBtn.style.display = '';
+    disconnectBtn.style.display = 'none';
+    sendBtn.disabled = true;
+    statusEl.textContent = 'DISCONNECTED';
+    led.classList.remove('on');
+    infoEl.textContent = 'Chưa kết nối thiết bị';
+    serialPanel.classList.remove('is-connected');
+  }
+
+  async function readLoop(){
+    if(!port || !port.readable || reading) return;
+    reading = true;
+    const decoder = new TextDecoder();
+    reader = port.readable.getReader();
+
+    try{
+      while(reading){
+        const {value, done} = await reader.read();
+        if(done) break;
+        if(value){
+          buffer += decoder.decode(value, {stream:true});
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          lines.forEach(line => {
+            const clean = line.replace(/\r$/, '');
+            if(clean) addLog(clean);
+          });
+        }
+      }
+    }catch(err){
+      if(reading) addLog(`[SERIAL ERROR] ${err.message || err}`, 'ln-err');
+    }finally{
+      try{ reader.releaseLock(); }catch(e){}
+      reader = null;
+      reading = false;
+    }
+  }
+
+  async function closePort(){
+    reading = false;
+    try{ if(reader) await reader.cancel(); }catch(e){}
+    try{ if(port) await port.close(); }catch(e){}
+    reader = null;
+    port = null;
+    buffer = '';
+    disconnectedUI();
+  }
+
+  connectBtn.addEventListener('click', async () => {
+    try{
+      port = await navigator.serial.requestPort();
+      await port.open({
+        baudRate: Number(baudSel.value),
+        dataBits: 8,
+        stopBits: 1,
+        parity: 'none',
+        flowControl: 'none'
+      });
+      consoleEl.innerHTML = '';
+      
+      addLog('— Serial Monitor đã kết nối —');
+      connectedUI();
+
+      readLoop();
+    }catch(err){
+      if(err?.name === 'NotFoundError') addLog('— Đã huỷ chọn cổng COM —');
+      else addLog(`[ERROR] ${err?.message || err}`, 'ln-err');
+      await closePort();
+    }
+  });
+
+  disconnectBtn.addEventListener('click', async () => {
+    addLog('— Đã ngắt kết nối —');
+    await closePort();
+  });
+
+  clearBtn.addEventListener('click', () => { consoleEl.innerHTML = ''; });
+  copyBtn.addEventListener('click', async () => {
+    try{
+      await navigator.clipboard.writeText(consoleEl.innerText);
+      if(typeof toast === 'function') toast('✓ Đã copy log');
+    }catch(e){
+      if(typeof toast === 'function') toast('Không copy được — trình duyệt chặn clipboard');
+    }
+  });
+
+  // ✅ Nút reset — gửi lệnh "reboot" qua Serial
+  resetBtn.addEventListener('click', async () => {
+    if(!port || !port.writable){
+      if(typeof toast === 'function') toast('Chưa kết nối Serial');
+      return;
+    }
+    try{
+      const writer = port.writable.getWriter();
+      await writer.write(new TextEncoder().encode('reboot\r\n'));
+      writer.releaseLock();
+      addLog('— Đã gửi lệnh reboot —');
+    }catch(e){
+      if(typeof toast === 'function') toast('Không gửi được lệnh reboot');
+    }
+  });
+
+  async function sendData(){
+    if(!port || !port.writable) return;
+    const text = inputEl.value;
+    if(!text) return;
+
+    let writer = null;
+    try{
+      writer = port.writable.getWriter();
+      await writer.write(new TextEncoder().encode(text + '\n'));
+      addLog(`> ${text}`);
+      inputEl.value = '';
+    }catch(err){
+      addLog(`[SEND ERROR] ${err?.message || err}`, 'ln-err');
+    }finally{
+      try{ if(writer) writer.releaseLock(); }catch(e){}
+    }
+  }
+
+  sendBtn.addEventListener('click', sendData);
+  inputEl.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); sendData(); }
+  });
+
+  navigator.serial.addEventListener('disconnect', event => {
+    if(port && event.target === port){
+      addLog('Thiết bị đã bị rút hoặc mất kết nối.', 'ln-err');
+      closePort();
+      if(typeof toast === 'function') toast('⚠ Serial Monitor mất kết nối');
+    }
+  });
+})();
+
+</script>
+</body>
+</html>
