@@ -1046,12 +1046,12 @@
   justify-content:center;
   min-width:0;
   width:100%;
-  font-size:11.5px;         /* nhỏ hơn 1 chút để chữ vừa */
-  padding:8px 10px;         /* padding vừa phải */
+  font-size:11.5px;
+  padding:8px 10px;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  letter-spacing:0;         /* bỏ letter-spacing giúp chữ vừa hơn */
+  letter-spacing:0;
 }
 @media (max-width:640px){
   .vip-toolbar-actions{
@@ -2372,7 +2372,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       log('> lỗi khi flash: ' + (err && err.message ? err.message : err), 'ln-err');
       toast('Flash thất bại — xem console bên dưới');
     }finally{
-      flashBtn.disabled = false; eraseOnlyBtn.disabled = false;
+      flashBtn.disabled = false; eraseOnlyBtn.disabled = true;
       progressBar.classList.remove('active');
       consoleDot?.classList.remove('busy');
     }
@@ -2725,30 +2725,81 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
         },
       });
 
+      // ═══════════════════════════════════════════════════════════════
+      // ✅ FLOW TỰ ĐỘNG: hard_reset → toggle DTR/RTS → tự mở Serial kết nối ESP
+      // ═══════════════════════════════════════════════════════════════
       smartLog('sys', 'RESET', '⟲ Đang reset board để chạy firmware mới...');
-      await esploader.after('hard_reset');
 
-      setFlashState('done', '✓ Nạp firmware thành công! Board đang khởi động lại...');
+      // 1) Thử hard_reset qua esptool trước (có thể fail — không sao)
+      try{
+        await esploader.after('hard_reset');
+      }catch(e){
+        rawLog('[WARN] hard_reset qua esptool thất bại: ' + (e?.message || e));
+      }
+
+      setFlashState('done', '✓ Nạp firmware thành công! Đang tự reset & kết nối lại...');
       setProgress(100);
-      smartLog('ok', 'FLASH XONG', '🎉 Đã flash firmware thành công! Đang tự động kết nối để đọc mã MAC...');
-      if(typeof toast === 'function') toast('🎉 Flash TV-B-Gone VIP thành công!');
+      smartLog('ok', 'FLASH XONG', '🎉 Flash thành công! Đang tự reset cứng và kết nối lại Serial...');
+      if(typeof toast === 'function') toast('🎉 Flash TV B Gone VIP thành công!');
 
+      // 2) Đóng transport + esploader hoàn toàn để nhả cổng COM
+      const flashedPort = currentPort;
       try{ if(transport) await transport.disconnect(); }catch(e){}
       esploader = null; transport = null; currentPort = null;
 
+      // 3) Sau khi flash xong → tự đóng modal → tự mở modal kích hoạt → tự reset cứng → tự mở Serial
       setTimeout(async () => {
         closeFlashModal();
         if(typeof window.openActivateModal === 'function') window.openActivateModal();
+
         try{
-          await new Promise(r => setTimeout(r, 800));
-          if(typeof window.openSpecificPortVip === 'function'){
+          await new Promise(r => setTimeout(r, 1200)); // đợi OS nhả cổng COM
+
+          // Tìm lại port đã flash
+          let p = flashedPort;
+          if(!p){
             const ports = await navigator.serial.getPorts();
-            if(ports && ports.length > 0){
-              await window.openSpecificPortVip(ports[ports.length - 1]);
-            }
+            if(ports && ports.length > 0) p = ports[ports.length - 1];
+          }
+          if(!p){
+            smartLog('sys', 'HƯỚNG DẪN', 'Không tìm thấy cổng COM — bấm "🔌 Kết nối Serial" để đọc mã MAC.');
+            return;
+          }
+
+          // ── BƯỚC A: Toggle DTR/RTS ép chip thoát bootloader ──
+          smartLog('sys', 'RESET CỨNG', '🔁 Đang toggle DTR/RTS để ép chip thoát bootloader...');
+          await p.open({ baudRate: 115200, dataBits: 8, stopBits: 1, parity: 'none', flowControl: 'none' });
+
+          // Trình tự reset esp32: RTS=EN, DTR=GPIO0(BOOT)
+          // RTS=true  → EN xuống thấp (chip reset)
+          // RTS=false → EN nhả (chip boot)
+          // DTR=false → GPIO0 HIGH → boot app bình thường (KHÔNG vào download mode)
+          try{ await p.setSignals({ dataTerminalReady: false, requestToSend: true }); }catch(e){}
+          await new Promise(r => setTimeout(r, 150));
+          try{ await p.setSignals({ dataTerminalReady: false, requestToSend: false }); }catch(e){}
+          await new Promise(r => setTimeout(r, 100));
+
+          // Đóng cổng tạm để nhường cho openSpecificPort mở lại sạch
+          await new Promise(r => setTimeout(r, 250));
+          try{ await p.close(); }catch(e){}
+
+          smartLog('ok', 'RESET CỨNG', '✓ Đã reset cứng — chip đang boot firmware...');
+
+          // ── BƯỚC B: Tự mở Serial Monitor VIP và kết nối vào ESP ──
+          if(typeof window.openSpecificPortVip === 'function'){
+            await new Promise(r => setTimeout(r, 600)); // đợi chip boot xong in banner
+            smartLog('sys', 'TỰ KẾT NỐI', '🔌 Đang tự động mở Serial Monitor kết nối vào ESP...');
+            window.__vipJustFlashed = true;  // ← báo cho openSpecificPort biết KHÔNG cần reboot nữa
+            await window.openSpecificPortVip(p);
+            smartLog('ok', 'TỰ KẾT NỐI', '✓ Đã kết nối Serial — đang chờ firmware in MAC...');
+          }else{
+            smartLog('sys', 'HƯỚNG DẪN', 'Bấm nút "🔌 Kết nối Serial" để đọc mã MAC thiết bị.');
           }
         }catch(err){
-          smartLog('sys', 'HƯỚNG DẪN', 'Bấm nút "🔌 Kết nối Serial" để đọc mã MAC thiết bị.');
+          const msg = err?.message || String(err);
+          rawLog('[WARN] auto-connect: ' + msg);
+          smartLog('warn', 'TỰ KẾT NỐI', '⚠️ Không tự kết nối được (' + msg + '). Bấm "🔌 Kết nối Serial" để thử lại.');
+          if(typeof toast === 'function') toast('⚠️ Không tự kết nối — bấm Kết nối Serial');
         }
       }, 1500);
 
@@ -2901,19 +2952,15 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
 
   // ✅ Regex bắt MAC — ưu tiên pattern firmware hungtesp
   function extractMacFromLine(line){
-    // ƯU TIÊN: pattern firmware in ra ">> MAC: 0xXXXXXXXX"
     let m = line.match(/MAC\s*[:=]\s*(?:0x)?([0-9A-Fa-f]{6,16})/i);
     if(m) return '0x' + m[1].replace(/^0x/i, '').toUpperCase();
 
-    // Pattern: [MAC] A1B2C3D4 hoặc MAC:A1B2C3D4
     m = line.match(/\[?MAC\]?\s*[:=]?\s*(?:0x)?([0-9A-Fa-f]{6,16})\b/i);
     if(m) return '0x' + m[1].replace(/^0x/i, '').toUpperCase();
 
-    // Pattern hex 8 ký tự bất kỳ (fallback)
     m = line.match(/\b(?:0x)?([0-9A-Fa-f]{8})\b/);
     if(m && /mac|chip|efuse|id/i.test(line)) return '0x' + m[1].toUpperCase();
 
-    // Pattern MAC dạng AA:BB:CC:DD:EE:FF
     m = line.match(/\b([0-9A-Fa-f]{2}(?:[:-][0-9A-Fa-f]{2}){5})\b/);
     if(m) return m[1].replace(/-/g, ':').toUpperCase();
 
@@ -2924,25 +2971,17 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     const line = rawLine.replace(/\x1B\[[0-?]*[ -/]*[@-~]/g, '').trim();
     if(!line) return;
 
-    // ✅ Bỏ qua hoàn toàn dòng hướng dẫn "Sau do nhap: key ..." — không hiện ở đâu cả
     if(line.includes('Sau do nhap:') || line.includes('nhap: key')) return;
 
     rawLog(line);
 
-    // ═══════════════════════════════════════════════════════════════
-    // ✅ NHẬN DIỆN BANNER XÁC THỰC FIRMWARE — hungtesp
-    // ═══════════════════════════════════════════════════════════════
-
-    // Bỏ qua dòng gạch ngang phân cách "====" cho gọn log
     if(/^=+$/.test(line)) return;
 
-    // Banner tiêu đề xác thực
     if(line.includes('XAC THUC FIRMWARE') && line.includes('hungtesp')){
       smartLog('sys', 'XÁC THỰC FW', '⚡ Đã khởi động module xác thực firmware TV-B-Gone VIP — hungtesp');
       return;
     }
 
-    // Bắt MAC từ "MAC cua chip: 0xXXXXXXXX"
     const foundMac = extractMacFromLine(line);
     if(foundMac && !detectedMac){
       if(window.__vipMacTimeout){
@@ -2955,7 +2994,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       if(typeof toast === 'function') toast('✓ Đã đọc MAC: ' + foundMac);
     }
 
-    // ── Trạng thái bản quyền ──
     if(line.includes('Da kich hoat truoc do')){
       setLicenseState('active');
       smartLog('ok', 'BẢN QUYỀN', '🎉 ĐÃ KÍCH HOẠT TRƯỚC ĐÓ — Firmware hợp lệ, chip sẵn sàng hoạt động.');
@@ -2988,7 +3026,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     else if(line.includes('Dang khoi dong lai') || line.includes('Dang khoi dong')){
       smartLog('sys', 'REBOOT', '🔄 Thiết bị đang khởi động lại...');
     }
-    // ── Thông báo hướng dẫn từ firmware ──
     else if(line.includes('Gui MAC tren cho') || line.includes('TikTok: hungesp32bw16')){
       smartLog('sys', 'HƯỚNG DẪN', '📱 Gửi mã MAC ở trên qua TikTok: @hungesp32bw16 để nhận key kích hoạt.');
     }
@@ -3124,19 +3161,23 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
       smartLog('sys', 'KẾT NỐI', '🔌 Đã mở cổng Web Serial thành công (115200 baud).');
       connectedUI();
 
-            readLoop();
+      readLoop();
 
-      // BƯỚC 1: Gửi lệnh reboot để chip khởi động lại sạch
-      await new Promise(r => setTimeout(r, 300));
-      smartLog('cmd', 'REBOOT', '⟲ Gửi lệnh "reboot" để chip khởi động lại sạch...');
-      rawLog('> reboot');
-      await writeSerial('reboot\r\n');
-
-      // BƯỚC 2: Đợi 2s cho chip boot xong + firmware tự in MAC
-      await new Promise(r => setTimeout(r, 2000));
+      // BƯỚC 1: Nếu vừa flash xong (auto-connect) thì KHÔNG reboot lại,
+      // để giữ nguyên banner MAC đang in ra. Ngược lại thì reboot cho sạch.
+      if(!window.__vipJustFlashed){
+        await new Promise(r => setTimeout(r, 300));
+        smartLog('cmd', 'REBOOT', '⟲ Gửi lệnh "reboot" để chip khởi động lại sạch...');
+        rawLog('> reboot');
+        await writeSerial('reboot\r\n');
+        // BƯỚC 2: Đợi 2s cho chip boot xong + firmware tự in MAC
+        await new Promise(r => setTimeout(r, 2000));
+      }else{
+        smartLog('sys', 'BỎ QUA REBOOT', '✓ Vừa reset cứng xong — bỏ qua lệnh reboot để giữ log MAC.');
+        window.__vipJustFlashed = false;
+      }
 
       // ✅ Nếu đã bắt được MAC từ boot log → không cần gửi lệnh mac nữa
-          
       if(!detectedMac){
         // BƯỚC 3: Fallback — chỉ gửi lệnh mac khi boot log không có MAC
         rawLog('> mac');
@@ -3232,8 +3273,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
 
     smartLog('sys', 'REBOOT', '⟲ Lệnh đã gửi. Chip sẽ khởi động lại trong ~1s...');
 
-    // Sau khi chip boot xong → tự động gửi lệnh mac
-         // Sau khi chip boot xong → tự động gửi lệnh mac
     setTimeout(async () => {
       if(port && port.writable){
         rawLog('> mac');
@@ -3275,7 +3314,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     await writeSerial('help\r\n');
   });
 
-  // ✅ Input key: cho phép tối đa 140 ký tự hex
+  // ✅ Input key: cho phép tối đa 160 ký tự hex
   keyInput.addEventListener('input', () => {
     let val = keyInput.value.trim();
     val = val.replace(/^KEY\s+/i, '').replace(/^0x/i, '');
@@ -3299,7 +3338,7 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     }
   });
 
-  // ✅ Gửi key: chấp nhận tối đa 140 ký tự hex
+  // ✅ Gửi key: chấp nhận tối đa 160 ký tự hex
   async function sendKey(){
     const raw = keyInput.value.trim();
     if(!raw || !port || !port.writable){
@@ -3508,7 +3547,6 @@ topBtn.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'
     }
   });
 
-  // ✅ Nút reset — gửi lệnh "reboot" qua Serial
   resetBtn.addEventListener('click', async () => {
     if(!port || !port.writable){
       if(typeof toast === 'function') toast('Chưa kết nối Serial');
